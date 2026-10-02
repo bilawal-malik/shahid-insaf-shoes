@@ -43,22 +43,24 @@ Remaining: initial git commit (on request).
 
 ---
 
-## P1 — API foundation
+## P1 — API foundation ✅
 
 **Goal:** data layer + auth + public catalogue API complete (seeded).
 
 Tasks:
 
-- [ ] Mongoose models (all 7 collections per doc 03) + indexes
-- [ ] `configService` w/ cache · `counterService` for order numbers
-- [ ] Seed script (admin, categories, products, demo orders, config)
-- [ ] Auth: register/login/logout/me/update/password/admin-check + JWT middleware + role guard
-- [ ] Public routes: products (list/filters/sort/pagination), product by slug (+related), categories tree, search, `/config`
-- [ ] Admin routes (skeleton list/CRUD for products & categories can start here or P4)
-- [ ] Validation (zod) + central error handler + ApiError + rate limit on auth
-- [ ] API smoke tests or a `scripts/smoke.js` (optional but recommended)
+- [x] Mongoose models (all 7 collections per doc 03) + indexes
+- [x] `configService` w/ cache · `counterService` for order numbers
+- [x] Seed script (admin, categories, products, demo orders, config) — idempotent, `--force` to wipe
+- [x] Auth: register/login/logout/me/update/password/admin-check + JWT middleware + role guard
+- [x] Public routes: products (list/filters/sort/pagination), product by slug (+related), categories tree, search, `/config`
+- [x] Validation (zod 4) + central error handler + ApiError + rate limit on auth
+- [x] Smoke tests: `npm run smoke -w apps/api` → **26/26 passing**
+- [ ] Admin routes (list/CRUD) → moved to P4 (admin UI phase)
 
-**Done when:** seed → `GET /products?category=&sort=` works with filters; login returns token; admin route rejects without token (403).
+**Done when:** ✅ seed → filters/sort/pagination work; login returns token + httpOnly cookie through Next proxy; admin guard returns 401/403 correctly; smoke 26/26.
+
+**Dev credentials (Atlas `sis_dev`):** admin `admin@sis.pk` / `Admin@SIS2026` (seed prints it — change for prod).
 
 ---
 

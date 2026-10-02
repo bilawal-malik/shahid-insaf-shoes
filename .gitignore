@@ -23,6 +23,8 @@ apps/api/.env
 # local scratch files (may contain tokens!)
 temp.txt
 temp*.txt
+atlas.env
+*.pem
 
 # logs
 logs/
