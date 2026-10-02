@@ -21,6 +21,19 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
 });
 
+const addressSchema = z.object({
+  _id: z.string().optional(),
+  label: z.string().trim().max(30).optional(),
+  fullName: z.string().trim().min(2).max(60),
+  phone: z.string().trim().regex(PK_PHONE, 'Enter a valid Pakistani mobile number (03XXXXXXXXX)'),
+  line1: z.string().trim().min(3).max(120),
+  line2: z.string().trim().max(120).optional().or(z.literal('')),
+  city: z.string().trim().min(1).max(60),
+  province: z.string().trim().min(1).max(60),
+  postalCode: z.string().trim().max(12).optional().or(z.literal('')),
+  isDefault: z.boolean().optional(),
+});
+
 const updateMeSchema = z
   .object({
     name: z.string().trim().min(2).max(60).optional(),
@@ -30,6 +43,7 @@ const updateMeSchema = z
       .regex(PK_PHONE, 'Enter a valid Pakistani mobile number (03XXXXXXXXX)')
       .optional(),
     email: z.string().trim().toLowerCase().email('Enter a valid email').optional(),
+    addresses: z.array(addressSchema).max(6, 'You can save up to 6 addresses').optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: 'Nothing to update' });
 

@@ -121,6 +121,142 @@ async function main() {
   await call('GET', '/auth/admin-check', { token, expect: 403 });
   await call('GET', '/auth/admin-check', { expect: 401 });
 
+  console.log('--- auth: addresses');
+  await call('PATCH', '/auth/me', {
+    token,
+    body: {
+      addresses: [
+        {
+          label: 'Home',
+          fullName: 'Smoke Tester',
+          phone: '03001234567',
+          line1: 'Street 1, Block A',
+          city: 'Lahore',
+          province: 'Punjab',
+          isDefault: true,
+        },
+      ],
+    },
+  });
+
+  console.log('--- carts');
+  let firstVariant = null;
+  let conflictVariant = null;
+  if (items.length) {
+    const pdp2 = await call('GET', `/products/${items[0].slug}`);
+    const variants = pdp2.data?.product?.variants || [];
+    firstVariant = variants.find((v) => v.stock >= 2) || variants.find((v) => v.stock > 0) || null;
+    conflictVariant = variants.find((v) => v.stock > 0 && v.stock < 20) || null;
+  }
+  if (firstVariant) {
+    const vId = firstVariant._id;
+    const pId = items[0]._id;
+    const add = await call('POST', '/carts/me/items', {
+      token,
+      body: { product: pId, variant: vId, qty: 1 },
+      expect: 201,
+    });
+    if (add.data?.items?.length !== 1) failures.push('cart add did not return 1 item');
+    if (conflictVariant) {
+      await call('POST', '/carts/me/items', {
+        token,
+        body: { product: pId, variant: conflictVariant._id, qty: conflictVariant.stock + 1 },
+        expect: 409,
+      });
+    }
+    await call('PATCH', `/carts/me/items/${vId}`, { token, body: { qty: 0 } });
+    await call('POST', '/carts/me/items', {
+      token,
+      body: { product: pId, variant: vId, qty: 1 },
+      expect: 201,
+    });
+    await call('DELETE', `/carts/me/items/${vId}`, { token });
+    await call('DELETE', '/carts/me', { token });
+    await call('GET', '/carts/me', { expect: 401 });
+  }
+
+  console.log('--- orders: guest COD flow');
+  let guestOrder = null;
+  if (firstVariant && items.length) {
+    const price = firstVariant.priceOverride ?? items[0].price;
+    const shipping = cfg.data?.shipping || {};
+    await call('POST', '/orders', {
+      body: {
+        customer: { name: 'Smoke', phone: '123', email: 'bad' },
+        shippingAddress: { fullName: 'Smoke', phone: '123', line1: 'x', city: 'Lahore', province: 'Punjab' },
+        items: [{ product: items[0]._id, variant: firstVariant._id, qty: 1 }],
+      },
+      expect: 400,
+    });
+
+    const placed = await call('POST', '/orders', {
+      body: {
+        customer: { name: 'Smoke Buyer', phone: '03001234567', email: 'smoke.buyer@test.dev' },
+        shippingAddress: {
+          fullName: 'Smoke Buyer',
+          phone: '03001234567',
+          line1: 'Street 1, Block A',
+          city: 'Lahore',
+          province: 'Punjab',
+        },
+        items: [{ product: items[0]._id, variant: firstVariant._id, qty: 1 }],
+      },
+      expect: 201,
+    });
+    guestOrder = placed.data?.order;
+    if (!guestOrder?.orderNumber) {
+      failures.push('guest order missing orderNumber');
+    } else {
+      const freeAbove = Number(shipping.freeAbove) > 0 ? Number(shipping.freeAbove) : Infinity;
+      const expectedShip = price >= freeAbove ? 0 : shipping.flatRate;
+      const expectedTotal = price + expectedShip;
+      if (guestOrder.pricing.total !== expectedTotal) {
+        failures.push(`order total expected ${expectedTotal} got ${guestOrder.pricing.total}`);
+      }
+
+      await call(
+        'GET',
+        `/orders/lookup?orderNumber=${guestOrder.orderNumber}&phone=03001234567`
+      );
+      await call(
+        'GET',
+        `/orders/lookup?orderNumber=${guestOrder.orderNumber}&phone=03000000000`,
+        { expect: 404 }
+      );
+    }
+    await call('GET', '/orders/lookup?orderNumber=BAD&phone=123', { expect: 400 });
+  }
+
+  console.log('--- orders: account flow');
+  if (firstVariant && items.length && token) {
+    const placed = await call('POST', '/orders', {
+      token,
+      body: {
+        customer: { name: 'Smoke Tester', phone: '03001234567', email },
+        shippingAddress: {
+          fullName: 'Smoke Tester',
+          phone: '03001234567',
+          line1: 'Street 1, Block A',
+          city: 'Lahore',
+          province: 'Punjab',
+        },
+        items: [{ product: items[0]._id, variant: firstVariant._id, qty: 1 }],
+      },
+      expect: 201,
+    });
+    const userOrder = placed.data?.order;
+    if (userOrder && !userOrder.user) failures.push('account order missing user link');
+
+    const mine = await call('GET', '/orders/me?page=1', { token });
+    if (!mine.data?.items?.length) failures.push('orders/me returned no orders');
+    if (userOrder) {
+      await call('GET', `/orders/me/${userOrder._id}`, { token });
+    }
+    await call('GET', '/orders/me/000000000000000000000000', { token, expect: 404 });
+    await call('GET', '/orders/me', { expect: 401 });
+    await call('GET', '/orders/me/000000000000000000000000', { expect: 401 });
+  }
+
   console.log('');
   console.log(`========== SMOKE: ${passed} passed, ${failed} failed ==========`);
   if (failures.length) {

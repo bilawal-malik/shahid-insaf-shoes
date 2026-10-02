@@ -12,7 +12,7 @@ html {
 }
 
 body {
-  @apply bg-white text-ink antialiased;
+  @apply bg-surface text-ink antialiased;
 }
 
 ::selection {
@@ -25,19 +25,23 @@ body {
   }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:cursor-not-allowed disabled:opacity-50 active:scale-[0.98];
   }
 
   .btn-primary {
-    @apply btn bg-brand-700 text-white hover:bg-brand-800;
+    @apply btn bg-brand-700 text-white shadow-sm hover:bg-brand-800 hover:shadow-md;
   }
 
   .btn-outline {
-    @apply btn border border-gray-300 bg-white text-ink hover:border-brand-400 hover:text-brand-800;
+    @apply btn border border-line bg-white text-ink shadow-sm hover:border-brand-700 hover:bg-brand-50 hover:text-brand-700;
   }
 
   .btn-ghost {
-    @apply btn text-ink-soft hover:bg-gray-100 hover:text-ink;
+    @apply btn text-ink-soft hover:bg-brand-50 hover:text-brand-700;
+  }
+
+  .btn-dark {
+    @apply btn bg-white text-brand-800 shadow-sm hover:bg-brand-50;
   }
 
   .btn-danger {
@@ -45,7 +49,7 @@ body {
   }
 
   .input {
-    @apply w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-mute focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500;
+    @apply w-full rounded-lg border border-line bg-white px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-mute focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20;
   }
 
   .label {
@@ -53,10 +57,18 @@ body {
   }
 
   .card {
-    @apply rounded-xl border border-gray-100 bg-white shadow-card;
+    @apply rounded-2xl border border-line bg-white shadow-card;
   }
 
   .badge {
-    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
+
+  .kicker {
+    @apply text-xs font-semibold uppercase tracking-[0.14em] text-brand-600;
+  }
+
+  .section-title {
+    @apply text-xl font-bold tracking-tight text-ink sm:text-2xl;
   }
 }

@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { connectDB, disconnectDB } from '../config/db.js';
 import User from '../models/User.js';
+import ContactMessage from '../models/ContactMessage.js';
 import Category from '../models/Category.js';
 import Product from '../models/Product.js';
 import Order from '../models/Order.js';
@@ -11,7 +12,31 @@ import { uniqueSlug } from '../utils/slug.js';
 import { nextOrderNumber } from '../services/counterService.js';
 
 const FORCE = process.argv.includes('--force');
-const img = (seed) => `https://picsum.photos/seed/${seed}/800/800`;
+
+/** Verified Unsplash footwear photo IDs (dev placeholders — replaced by real photos in admin). */
+const PHOTOS = [
+  '1449505278894-297fdb3edbc1',
+  '1582897085656-c636d006a246',
+  '1575537302964-96cd47c06b1b',
+  '1595950653106-6c9ebd614d3a',
+  '1614252235316-8c857d38b5f4',
+  '1562183241-b937e95585b6',
+  '1603487742131-4160ec999306',
+  '1491553895911-0055eca6402d',
+  '1460353581641-37baddab0fa2',
+  '1520639888713-7851133b1ed0',
+  '1512374382149-233c42b6a83b',
+  '1531310197839-ccf54634509e',
+  '1606107557195-0e29a4b5b4aa',
+  '1549298916-b41d501d3772',
+  '1542291026-7eec264c27ff',
+  '1560769629-975ec94e6a86',
+  '1543163521-1bf539c55dd2',
+  '1608231387042-66d1773070a5',
+  '1600185365483-26d7a4cc7519',
+];
+const photo = (i) =>
+  `https://images.unsplash.com/photo-${PHOTOS[i % PHOTOS.length]}?w=900&q=80&auto=format&fit=crop`;
 
 const CATEGORIES = [
   { name: 'Sandals', sortOrder: 1, children: ['Peshawari Chappal', 'Kolhapuri'] },
@@ -161,8 +186,9 @@ async function seed() {
       Product.deleteMany({}),
       Category.deleteMany({}),
       Order.deleteMany({}),
-      User.deleteMany({ role: 'customer' }),
+      User.deleteMany({}),
       Config.deleteMany({}),
+      ContactMessage.deleteMany({}),
     ]);
     await mongoose.connection.db.collection('counters').deleteMany({});
   }
@@ -181,13 +207,14 @@ async function seed() {
 
   console.log('[seed] categories...');
   const catMap = {};
-  for (const top of CATEGORIES) {
+  for (let ci = 0; ci < CATEGORIES.length; ci += 1) {
+    const top = CATEGORIES[ci];
     const topDoc = await Category.create({
       name: top.name,
       slug: await uniqueSlug(Category, top.name),
       sortOrder: top.sortOrder,
       description: `${top.name} from SIS — handcrafted quality footwear.`,
-      image: { url: img(`sis-cat-${top.name.toLowerCase()}`), alt: top.name },
+      image: { url: photo(ci * 4), alt: top.name },
     });
     catMap[top.name] = topDoc._id;
 
@@ -201,7 +228,7 @@ async function seed() {
         sortOrder: i + 1,
         description: `${childName} collection by SIS.`,
         image: {
-          url: img(`sis-cat-${childName.toLowerCase().replace(/\s+/g, '-')}`),
+          url: photo(ci * 4 + i + 1),
           alt: childName,
         },
       });
@@ -236,9 +263,9 @@ async function seed() {
       compareAtPrice: p.compare,
       variants,
       images: [
-        { url: img(`sis-prod-${i + 1}-a`), alt: `${p.name} - view 1`, isPrimary: true },
-        { url: img(`sis-prod-${i + 1}-b`), alt: `${p.name} - view 2` },
-        { url: img(`sis-prod-${i + 1}-c`), alt: `${p.name} - view 3` },
+        { url: photo(i * 3), alt: `${p.name} - view 1`, isPrimary: true },
+        { url: photo(i * 3 + 1), alt: `${p.name} - view 2` },
+        { url: photo(i * 3 + 2), alt: `${p.name} - view 3` },
       ],
       status: 'active',
       isFeatured: p.featured,

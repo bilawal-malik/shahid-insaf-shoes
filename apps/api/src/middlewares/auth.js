@@ -30,3 +30,19 @@ export const requireAdmin = [
     return next();
   },
 ];
+
+/** Attaches req.user when a valid token is present; never rejects. */
+export const optionalAuth = asyncHandler(async (req, _res, next) => {
+  const header = req.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7).trim() : null;
+  if (!token) return next();
+
+  try {
+    const payload = verifyToken(token);
+    const user = await User.findById(payload.sub).select('name email phone role isActive');
+    if (user?.isActive) req.user = user;
+  } catch {
+    /* invalid token → proceed as guest */
+  }
+  return next();
+});

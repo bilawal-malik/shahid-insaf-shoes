@@ -1,10 +1,5 @@
 const apiUrl = process.env.API_URL || 'http://localhost:4100/api/v1';
 
-const DEFAULT_OPTIONS = {
-  cache: 'no-store',
-  headers: { 'Content-Type': 'application/json' },
-};
-
 async function handleResponse(res) {
   if (!res.ok) {
     let message = `Request failed (${res.status})`;
@@ -25,11 +20,12 @@ async function handleResponse(res) {
 
 /** Server-side fetch (Server Components) — talks directly to the API. */
 export async function api(path, options = {}) {
+  const { next, headers, signal, ...rest } = options;
   const res = await fetch(`${apiUrl}${path}`, {
-    ...DEFAULT_OPTIONS,
-    ...options,
-    headers: { ...DEFAULT_OPTIONS.headers, ...(options.headers || {}) },
-    next: options.next || undefined,
+    ...(next ? { next } : { cache: 'no-store' }),
+    signal: signal || AbortSignal.timeout(8000),
+    ...rest,
+    headers: { 'Content-Type': 'application/json', ...(headers || {}) },
   });
   return handleResponse(res);
 }
@@ -39,10 +35,11 @@ export async function api(path, options = {}) {
  * so httpOnly auth cookies stay same-origin (no CORS).
  */
 export async function apiClient(path, options = {}) {
+  const { headers, ...rest } = options;
   const res = await fetch(`/api/proxy${path}`, {
-    ...DEFAULT_OPTIONS,
-    ...options,
-    headers: { ...DEFAULT_OPTIONS.headers, ...(options.headers || {}) },
+    cache: 'no-store',
+    ...rest,
+    headers: { 'Content-Type': 'application/json', ...(headers || {}) },
   });
   return handleResponse(res);
 }

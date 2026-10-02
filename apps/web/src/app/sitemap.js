@@ -4,25 +4,42 @@ const apiUrl = process.env.API_URL || 'http://localhost:4100/api/v1';
 const STATIC_ROUTES = [
   '',
   '/products',
-  '/categories',
   '/about',
   '/contact',
   '/faq',
-  '/shipping-and-delivery',
-  '/returns-and-exchange',
+  '/shipping',
+  '/returns',
   '/privacy',
   '/terms',
 ];
 
-async function fetchSlugs(path) {
+async function fetchJson(path) {
   try {
     const res = await fetch(`${apiUrl}${path}`, { next: { revalidate: 300 } });
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data;
+    if (!res.ok) return null;
+    return await res.json();
   } catch {
-    return [];
+    return null;
   }
+}
+
+async function fetchAllProducts() {
+  const all = [];
+  for (let page = 1; page <= 5; page++) {
+    const data = await fetchJson(`/products?limit=48&page=${page}`);
+    if (!data?.items?.length) break;
+    all.push(...data.items);
+    if (page >= (data.pages || 1)) break;
+  }
+  return all;
+}
+
+function flattenCategories(nodes, out = []) {
+  for (const node of nodes || []) {
+    out.push(node);
+    if (node.children?.length) flattenCategories(node.children, out);
+  }
+  return out;
 }
 
 export default async function sitemap() {
@@ -35,8 +52,11 @@ export default async function sitemap() {
     priority: route === '' ? 1 : 0.7,
   }));
 
-  const products = await fetchSlugs('/products?limit=1000&fields=slug,updatedAt');
-  const categories = await fetchSlugs('/categories?fields=slug,updatedAt');
+  const [products, categoriesRes] = await Promise.all([
+    fetchAllProducts(),
+    fetchJson('/categories'),
+  ]);
+  const categories = flattenCategories(categoriesRes?.items);
 
   return [
     ...staticEntries,

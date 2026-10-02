@@ -20,6 +20,7 @@ export function errorHandler(err, req, res, next) {
       message,
       code: err.code || (status === 500 ? 'INTERNAL_ERROR' : 'ERROR'),
       ...(err.fields ? { fields: err.fields } : {}),
+      ...(err.details ? { details: err.details } : {}),
       ...(env.isProd ? {} : { stack: err.stack }),
     },
   });

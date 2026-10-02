@@ -37,7 +37,7 @@ export async function login({ email, password }) {
   return toPublicUser(user);
 }
 
-export async function updateProfile(userId, { name, phone, email }) {
+export async function updateProfile(userId, { name, phone, email, addresses }) {
   const user = await User.findById(userId);
   if (!user) throw ApiError.notFound('Account not found');
 
@@ -48,6 +48,33 @@ export async function updateProfile(userId, { name, phone, email }) {
   }
   if (name !== undefined) user.name = name;
   if (phone !== undefined) user.phone = phone;
+
+  if (addresses !== undefined) {
+    const clean = addresses.map((a) => ({
+      ...(a._id ? { _id: a._id } : {}),
+      label: a.label || 'Home',
+      fullName: a.fullName,
+      phone: a.phone,
+      line1: a.line1,
+      line2: a.line2 || '',
+      city: a.city,
+      province: a.province,
+      postalCode: a.postalCode || '',
+      isDefault: !!a.isDefault,
+    }));
+    if (clean.length === 1) clean[0].isDefault = true;
+    if (!clean.some((a) => a.isDefault) && clean.length > 0) clean[0].isDefault = true;
+    if (clean.filter((a) => a.isDefault).length > 1) {
+      let seen = false;
+      for (const a of clean) {
+        if (a.isDefault) {
+          if (seen) a.isDefault = false;
+          seen = true;
+        }
+      }
+    }
+    user.addresses = clean;
+  }
 
   await user.save();
   return toPublicUser(user);

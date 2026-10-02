@@ -1,4 +1,7 @@
+import { Inter } from 'next/font/google';
 import '@/styles/globals.css';
+
+const inter = Inter({ subsets: ['latin'], display: 'swap', variable: '--font-sans' });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3100';
 const siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'SIS - Shahid Insaf Shoes';
@@ -24,12 +27,12 @@ export const metadata = {
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#ffffff',
+  themeColor: '#f5f7fa',
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" className={inter.variable}>
       <body>{children}</body>
     </html>
   );

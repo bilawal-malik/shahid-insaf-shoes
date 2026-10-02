@@ -22,7 +22,7 @@
 
 ---
 
-## P0 — Setup & docs ✅ (in progress)
+## P0 — Setup & docs ✅
 
 **Goal:** zero-to-dev environment, conventions locked.
 
@@ -34,7 +34,7 @@ Tasks:
 - [x] `apps/api`: Express scaffold (helmet, cors, morgan, errorHandler, `/health`, `/api/v1` mount)
 - [x] Root scripts: `dev` (concurrently), `lint`, `build`
 - [x] DB connection module + graceful shutdown (dev continues without Mongo; prod fails fast)
-- [ ] Initial git commit
+- [x] Initial git commit
 
 > **Dev ports:** web `:3100`, api `:4100` (3000/4000 occupied on dev machine — kept in `.env` everywhere).
 
@@ -64,43 +64,43 @@ Tasks:
 
 ---
 
-## P2 — Storefront browse
+## P2 — Storefront browse ✅
 
 **Goal:** beautiful, fast, indexable browsing experience.
 
 Tasks:
 
-- [ ] Layout: Header (nav from categories, search, cart badge), Footer (from config), announcement bar
-- [ ] Home: hero, trust strip, category tiles, featured/new/popular sections (ISR)
-- [ ] `/products` grid + filters + sort + pagination (URL state)
-- [ ] Category page w/ breadcrumb + children chips
-- [ ] PDP: gallery, size/color select, price/discount, stock, related, accordions
-- [ ] Search page
-- [ ] Info pages (static content)
-- [ ] ProductCard, Skeletons, EmptyStates, toast system
-- [ ] API proxy route handlers for cookie-forwarding (auth prep)
-- [ ] `generateMetadata` everywhere + first pass JSON-LD (Product/Organization)
+- [x] Layout: Header (nav from categories, search, cart badge), Footer (from config), announcement bar
+- [x] Home: hero, trust strip, category tiles, featured/new/popular sections (ISR)
+- [x] `/products` grid + filters + sort + pagination (URL state)
+- [x] Category page w/ breadcrumb + children chips
+- [x] PDP: gallery, size/color select, price/discount, stock, related, accordions
+- [x] Search page
+- [x] Info pages (static content)
+- [x] ProductCard, Skeletons, EmptyStates, toast system
+- [x] API proxy route handlers for cookie-forwarding (auth prep)
+- [x] `generateMetadata` everywhere + first pass JSON-LD (Product/Organization)
 
 **Done when:** full browse flow on mobile + desktop, all pages SSR with unique titles, Lighthouse SEO ≥ 90 already.
 
 ---
 
-## P3 — Cart & COD checkout
+## P3 — Cart & COD checkout ✅
 
 **Goal:** a visitor can buy with cash on delivery.
 
 Tasks:
 
-- [ ] Zustand cart (persist localStorage, hydration-safe) + Header badge + cart page
-- [ ] Add-to-cart with variant/stock validation; stock conflict handling
-- [ ] Auth pages (login/register) + merge guest cart on login
-- [ ] Checkout page (steps, validation, PK phone format, summary, COD)
-- [ ] `POST /orders` service: price recompute, shipping from config, stock decrement (conditional updates), order number, history
-- [ ] Confirmation page + public track-order lookup
-- [ ] Account: profile, orders list/detail, address book; saved-address checkout path
-- [ ] 409 stock error UX; rate limit on order create
+- [x] Zustand cart (persist localStorage, hydration-safe) + Header badge + cart page
+- [x] Add-to-cart with variant/stock validation; stock conflict handling (409 `STOCK_UNAVAILABLE` + `details.conflicts` → checkout banner)
+- [x] Auth pages (login/register) + merge guest cart on login (`lib/cart-sync.js`)
+- [x] Checkout page (contact/address/COD/review, PK phone validation, saved-address picker, create-account option, summary, 409 UX)
+- [x] `POST /orders` service: server-side price recompute, shipping from config, atomic conditional stock decrement + rollback, order number `SIS-YYYY-NNNNN`, `statusHistory`, guest or account order, optional account creation, rate limit (`orderLimiter`)
+- [x] Confirmation page (sessionStorage snapshot → `/track-order` fallback) + public track-order lookup (`GET /orders/lookup` + `StatusTracker`)
+- [x] Account: profile (PATCH `/auth/me`), password change, orders list/detail (`GET /orders/me[/:id]`), address book CRUD (PATCH `/auth/me` with `addresses`, max 6, single default)
+- [x] Smoke extended for carts + orders → **46/46 passing**
 
-**Done when:** guest can place order end-to-end on a phone; DB shows correct totals/stock; order visible via `/track-order`; logged-in path works.
+**Done when:** ✅ guest can place order end-to-end through the Next proxy (verified: `SIS-2026-00006/00007/00008/00010`); DB shows correct totals/stock; order visible via `/track-order` (wrong phone → 404); logged-in path + order isolation (foreign id → 401/404) verified; lint 0, build 21/21.
 
 ---
 

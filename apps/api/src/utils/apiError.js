@@ -1,9 +1,10 @@
 export class ApiError extends Error {
-  constructor(status, message, code = null, fields = null) {
+  constructor(status, message, code = null, fields = null, details = null) {
     super(message);
     this.status = status;
     this.code = code;
     this.fields = fields;
+    this.details = details;
   }
 
   static badRequest(message = 'Bad request', fields = null) {
@@ -18,8 +19,8 @@ export class ApiError extends Error {
   static notFound(message = 'Not found') {
     return new ApiError(404, message, 'NOT_FOUND');
   }
-  static conflict(message = 'Conflict', code = 'CONFLICT') {
-    return new ApiError(409, message, code);
+  static conflict(message = 'Conflict', code = 'CONFLICT', details = null) {
+    return new ApiError(409, message, code, null, details);
   }
 }
 

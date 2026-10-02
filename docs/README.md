@@ -35,9 +35,8 @@ Production-level e-commerce platform for **SIS (Shahid Insaf Shoes)** — a loca
 - [x] Documentation drafted (9 docs)
 - [x] Phase 0 — Repo setup (monorepo, lint, scaffolds, build passing)
 - [x] Phase 1 — Database + API foundation (models, auth, catalogue API, seed, smoke 26/26)
-- [ ] Phase 2 — Storefront browse
-- [ ] Phase 2 — Storefront browse
-- [ ] Phase 3 — Cart, checkout, orders
+- [x] Phase 2 — Storefront browse (home, catalog, category, PDP, search, info pages, JSON-LD)
+- [x] Phase 3 — Cart, checkout, orders (guest + account COD flow, track-order, account pages, smoke 46/46)
 - [ ] Phase 4 — Admin auth + catalogue CRUD
 - [ ] Phase 5 — Admin orders, config, reports
 - [ ] Phase 6 — SEO + performance pass
