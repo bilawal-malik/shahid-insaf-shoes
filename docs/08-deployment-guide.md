@@ -1,0 +1,207 @@
+# 08 — Deployment Guide (Railway + Vercel)
+
+**Production topology**
+
+| Piece                         | Host                                           | Domain             |
+| ----------------------------- | ---------------------------------------------- | ------------------ |
+| Next.js storefront + admin UI | **Vercel**                                     | `sispk.com` (apex) |
+| Express API                   | **Railway**                                    | `api.sispk.com`    |
+| Database                      | **MongoDB Atlas** (free M0 → paid when needed) | —                  |
+| Images                        | **Cloudinary**                                 | CDN URLs           |
+| DNS                           | Domain registrar (Namecheap/Porkbun/etc.)      | A/CNAME records    |
+
+> Domain example used throughout: **sispk.com** — replace with the real purchased domain.
+
+---
+
+## 1. Environment variables
+
+### 1.1 `apps/api` (Railway)
+
+| Key                     | Example / notes                                                                                                                                    |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NODE_ENV`              | `production`                                                                                                                                       |
+| `PORT`                  | Railway injects `PORT` — app must `listen(process.env.PORT \|\| 4000)`                                                                             |
+| `MONGODB_URI`           | `mongodb+srv://user:pass@cluster.mongodb.net/sis_prod`                                                                                             |
+| `JWT_SECRET`            | long random string (`openssl rand -hex 32`) — **same secret as web? no: web never verifies JWT itself** (only API does). Web just forwards cookie. |
+| `JWT_EXPIRES_IN`        | `7d`                                                                                                                                               |
+| `WEB_ORIGIN`            | `https://sispk.com` (credentialed CORS allowlist)                                                                                                  |
+| `CLOUDINARY_CLOUD_NAME` | e.g. `sis-shoes`                                                                                                                                   |
+| `CLOUDINARY_API_KEY`    |                                                                                                                                                    |
+| `CLOUDINARY_API_SECRET` |                                                                                                                                                    |
+| `RATE_LIMIT_*`          | optional overrides                                                                                                                                 |
+
+### 1.2 `apps/web` (Vercel)
+
+| Key                     | Example / notes                                                                   |
+| ----------------------- | --------------------------------------------------------------------------------- |
+| `API_URL`               | `https://api.sispk.com/api/v1` — **server-side only** (Server Components + proxy) |
+| `NEXT_PUBLIC_SITE_URL`  | `https://sispk.com` (canonical/OG/sitemap)                                        |
+| `NEXT_PUBLIC_SITE_NAME` | `SIS — Shahid Insaf Shoes`                                                        |
+
+Never expose Mongo URI / Cloudinary secret / JWT secret to `NEXT_PUBLIC_*`.
+
+### 1.3 Local `.env.example` (root — documents all)
+
+```bash
+# apps/api (.env)
+NODE_ENV=development
+PORT=4000
+MONGODB_URI=mongodb://localhost:27017/sis_dev
+JWT_SECRET=change-me
+JWT_EXPIRES_IN=7d
+WEB_ORIGIN=http://localhost:3100
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
+
+# apps/web (.env.local)
+API_URL=http://localhost:4100/api/v1
+NEXT_PUBLIC_SITE_URL=http://localhost:3100
+NEXT_PUBLIC_SITE_NAME=SIS — Shahid Insaf Shoes
+```
+
+---
+
+## 2. MongoDB Atlas setup
+
+1. Create Atlas account → M0 (free) cluster for start
+2. Database Access: app user (password auth), least privilege `readWrite` on `sis_prod`
+3. Network Access: IP `0.0.0.0/0` for v1 (Vercel/Railway use dynamic egress IPs) — **note:** acceptable for launch; revisit with Atlas Private Endpoint later
+4. Create DB `sis_prod` (or let first insert create it)
+5. Connection string → Railway `MONGODB_URI`
+6. Seed prod: run seed once against prod URI (locally with prod env) or via admin UI manually
+7. Backups: M0 = community snapshots; plan M10+ when revenue justifies
+
+---
+
+## 3. Railway (Express API)
+
+1. New project → **Deploy from GitHub** → root of repo
+2. Configure:
+   - **Root Directory:** `apps/api` (or monorepo-aware Nixpacks config)
+   - **Build command:** `npm ci` (workspace-aware: run from repo root with `npm ci --workspace apps/api` if needed)
+   - **Start command:** `npm start` → `node src/server.js` (or `node apps/api/src/server.js` if root-scoped)
+3. **Monorepo gotcha:** Railway must install only the API workspace. Preferred setup:
+   - Add `apps/api/package.json` with its own start script
+   - Railway Root Directory = `apps/api` → treat as standalone Node project (simplest)
+   - OR root Dockerfile building only api stage (most reliable — decide in P7)
+4. Add env vars (§1.1)
+5. Generate domain → `api.sispk.com` (Railway Settings → Networking → Generate Domain, then CNAME to your DNS)
+6. Health check path: `/health` (Railway checks `/api/health` if prefixed — align with deploy; docs assume mounted at `/health` root AND `/api/v1/...` versioned routes)
+7. Logs: watch first boot — "Server listening", "Mongo connected"
+
+**Railway deploy triggers:** every push to `main` (keep preview branches off for API if undesired).
+
+---
+
+## 4. Vercel (Next.js)
+
+1. Import Git repo → framework auto: **Next.js**
+2. **Root Directory:** `apps/web` (Vercel monorepo support) → build command auto `next build`
+3. Env vars (§1.2) — set for **Production + Preview + Development** as needed
+4. Custom domain: add `sispk.com` (+ `www`) → Vercel gives nameservers or CNAME/A records:
+   - Apex: `A 76.76.21.21` (or current Vercel apex IP) / CNAME `cname.vercel-dns.com` per Vercel instructions
+   - www: `CNAME cname.vercel-dns.com`
+   - Apex is canonical; Vercel redirect config: `www` → apex (or set canonical consistently)
+5. HTTPS: automatic
+6. `NEXT_PUBLIC_SITE_URL` must match final domain (sitemap/OG depend on it)
+
+---
+
+## 5. Cloudinary
+
+1. Free account → create cloud → API keys
+2. **Unsigned upload is NOT allowed** (admin upload goes through Express `/admin/upload` which signs server-side) ✓ secure by design
+3. Folders: `sis/products`, `sis/categories`, `sis/banners`
+4. Upload max size enforce: 5MB, jpg/png/webp
+5. Keep transformation in delivery URL: `q_auto,f_auto,w_*` via next/image loader
+
+---
+
+## 6. DNS record summary (final)
+
+| Type  | Name | Value                           | Purpose                     |
+| ----- | ---- | ------------------------------- | --------------------------- |
+| A     | @    | Vercel apex IP (per dashboard)  | storefront                  |
+| CNAME | www  | cname.vercel-dns.com            | www → then redirect to apex |
+| CNAME | api  | <railway-domain>.up.railway.app | API                         |
+
+(Use nameservers mode at registrar if using Vercel DNS — either works; keep registrar DNS + records for simplicity.)
+
+---
+
+## 7. Post-deploy verification checklist
+
+**Connectivity**
+
+- [ ] `https://api.sispk.com/health` → `{ ok: true }`
+- [ ] `https://sispk.com` loads; API called server-side (view source shows SSR product HTML)
+- [ ] CORS: storefront proxied (browser never calls api cross-origin in normal flow)
+
+**Functional (test on real phone)**
+
+- [ ] Browse → PDP → size select → add to cart → checkout COD → order placed
+- [ ] Order # format correct; appears in admin within seconds
+- [ ] `track-order` works with order# + phone
+- [ ] Admin login → update status Placed→Confirmed→Shipped→Delivered; timeline records; stock updates
+- [ ] Cancel restores stock
+- [ ] Change shipping flatRate in config → checkout total changes (new session)
+- [ ] Image upload from admin works (Cloudinary prod)
+- [ ] Guest cart persists across reloads; logged-in cart syncs
+
+**SEO / polish**
+
+- [ ] `https://sispk.com/sitemap.xml` valid; submitted to Search Console
+- [ ] `robots.txt` correct
+- [ ] Each key page: correct title/description/canonical (view-source)
+- [ ] Rich Results Test on 1 PDP passes
+- [ ] OG share preview looks right (WhatsApp/Twitter card debugger)
+- [ ] 404 page works for random URL
+- [ ] No `console` errors in prod build
+
+**Ops**
+
+- [ ] Vercel Analytics / Speed Insights on
+- [ ] UptimeRobot pings `/health` (5 min) + homepage (15 min)
+- [ ] Railway spend alerts set (budget guard)
+- [ ] DB backup note in place
+- [ ] Secrets rotated from dev values (JWT secret, Atlas password different from dev)
+
+---
+
+## 8. Rollback & troubleshooting
+
+| Issue                             | Check                                                                                                   |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| API 5xx after deploy              | Railway logs → usually missing env or Mongo URI typo; health endpoint first                             |
+| CORS error in browser             | Proxy not used — ensure all fetches go through `/api/proxy` or SSR                                      |
+| Cookie not set on login           | Proxy must forward `Set-Cookie` from API or set it itself with `secure`, `sameSite: 'lax'`, `path: '/'` |
+| 404 on all pages after env change | `API_URL` wrong or API down → SSR pages fail; check Vercel function logs                                |
+| Images broken                     | Cloudinary cloud name env missing or next.config remotePatterns missing domain                          |
+| Stale price on PDP                | ISR revalidate; hard refresh; acceptable — checkout recomputes anyway                                   |
+
+**Rollback:** Vercel + Railway both keep deployment history → instant rollback to previous deploy from dashboards.
+
+---
+
+## 9. Costs (order-of-magnitude, v1)
+
+| Service       | Plan                                              | Est.         |
+| ------------- | ------------------------------------------------- | ------------ |
+| Vercel        | Hobby (personal) → Pro if commercial use required | $0 → $20/mo  |
+| Railway       | Hobby $5 credit/mo; API usage ~small              | ~$0-5/mo     |
+| MongoDB Atlas | M0 free → M10 when data/compliance needs          | $0 → ~$9+/mo |
+| Cloudinary    | Free tier 25 credits/mo (plenty early)            | $0           |
+| Domain        | .com yearly                                       | ~$10-15/yr   |
+
+> **Note:** Vercel Hobby ToS restricts commercial usage — when revenue starts, budget Vercel Pro. Railway free tier is usage-credit based; expect small charge as traffic grows.
+
+---
+
+## 10. CI (optional, P7)
+
+`.github/workflows/ci.yml` (nice-to-have):
+
+- on PR: `npm ci` → `npm run lint` → `npm run build` (web)
+- Deploy: Railway/Vercel Git integrations handle deploys (no custom CD needed)
