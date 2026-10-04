@@ -487,6 +487,7 @@ async function seed() {
   const ADMINS = [
     { name: 'Store Admin', email: 'admin@sis.pk', phone: '03000000000', password: DEMO_PASSWORD },
     { name: 'Bilawal', email: 'bilawal@gmail.com', phone: '03000000001', password: 'Bilawal' },
+    { name: 'Shahid', email: 'shahid@gmail.com', phone: '03000000002', password: 'Shahid321' },
   ];
   const adminHash = await bcrypt.hash(DEMO_PASSWORD, 10);
   for (const a of ADMINS) {

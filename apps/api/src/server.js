@@ -7,7 +7,7 @@ async function main() {
     await connectDB();
   } catch (err) {
     if (env.isProd) {
-      console.error('[db] connection failed — exiting (production)');
+      console.error('[db] connection failed — exiting (production):', err?.message || err);
       process.exit(1);
     }
     console.warn('[db] connection failed — server will run WITHOUT database (dev only)');
