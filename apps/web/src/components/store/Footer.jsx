@@ -1,9 +1,11 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Phone, Mail, MapPin, MessageCircle, Truck, ShieldCheck, RotateCcw } from 'lucide-react';
+import { waMeLink } from '@/lib/phone';
 
 export default function Footer({ config, categories = [] }) {
   const store = config?.store;
+  const whatsapp = waMeLink(store?.whatsapp || store?.phone);
   const year = new Date().getFullYear();
 
   const helpLinks = [
@@ -112,10 +114,10 @@ export default function Footer({ config, categories = [] }) {
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0" /> {store.address}
               </li>
             )}
-            {store?.whatsapp && (
+            {whatsapp && (
               <li>
                 <a
-                  href={`https://wa.me/${store.whatsapp.replace(/\D/g, '')}`}
+                  href={whatsapp}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2.5 hover:text-white"

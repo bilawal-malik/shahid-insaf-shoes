@@ -1,4 +1,5 @@
 import { api } from '@/lib/api';
+import { waMeLink } from '@/lib/phone';
 import InfoShell, { InfoSection } from '@/components/store/InfoShell';
 import ContactForm from './ContactForm';
 
@@ -11,7 +12,7 @@ export const metadata = {
 export default async function ContactPage() {
   const config = await api('/config', { next: { revalidate: 300 } }).catch(() => null);
   const store = config?.store || {};
-  const whatsapp = (store.whatsapp || store.phone || '').replace(/[^\d]/g, '');
+  const whatsapp = waMeLink(store.whatsapp || store.phone);
 
   return (
     <InfoShell title="Contact Us" subtitle="We usually reply within one working day." wide>
@@ -36,7 +37,7 @@ export default async function ContactPage() {
               </a>
               {whatsapp && (
                 <a
-                  href={`https://wa.me/${whatsapp}`}
+                  href={whatsapp}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="mt-1 inline-block text-sm font-medium text-green-700 hover:text-green-800"

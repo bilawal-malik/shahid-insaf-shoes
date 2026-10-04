@@ -503,7 +503,7 @@ async function seed() {
   const admin = await User.findOne({ email: 'admin@sis.pk' });
 
   console.log('[seed] config...');
-  await Config.create({ key: 'store' });
+  await Config.create({ key: 'store', store: { phone: '03029775416' } });
 
   console.log('[seed] categories...');
   const catMap = {};

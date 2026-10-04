@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -10,7 +10,20 @@ import SignOutButton from './SignOutButton';
 
 export default function MobileMenu({ categories = [], isLoggedIn = false }) {
   const [open, setOpen] = useState(false);
+  const [shown, setShown] = useState(false);
   const pathname = usePathname();
+
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
+    if (!open) setShown(false);
+  }
+
+  useLayoutEffect(() => {
+    if (!open) return undefined;
+    const id = requestAnimationFrame(() => setShown(true));
+    return () => cancelAnimationFrame(id);
+  }, [open]);
 
   const [lastPathname, setLastPathname] = useState(pathname);
   if (lastPathname !== pathname) {
@@ -52,9 +65,15 @@ export default function MobileMenu({ categories = [], isLoggedIn = false }) {
               type="button"
               aria-label="Close menu"
               onClick={() => setOpen(false)}
-              className="absolute inset-0 bg-brand-950/40"
+              className={`absolute inset-0 bg-brand-950/40 transition-opacity duration-200 ${
+                shown ? 'opacity-100' : 'opacity-0'
+              }`}
             />
-            <div className="absolute inset-y-0 left-0 flex w-80 max-w-[85vw] flex-col bg-white shadow-xl">
+            <div
+              className={`absolute inset-y-0 left-0 flex w-80 max-w-[85vw] flex-col bg-white shadow-xl transition-transform duration-200 ease-out ${
+                shown ? 'translate-x-0' : '-translate-x-full'
+              }`}
+            >
               <div className="flex items-center justify-between bg-brand-950 px-4 py-4">
                 <span className="flex items-center gap-2.5">
                   <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-white">
