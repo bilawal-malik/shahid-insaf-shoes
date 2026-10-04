@@ -44,5 +44,5 @@ Production-level e-commerce platform for **SIS (Shahid Insaf Shoes)** — a loca
 - [x] Email verification on register (6-digit OTP, block-until-verified, resend; OTP delivered by email only — never shown on screen; verify auto-signs-in and redirects home; real Brevo delivery verified; covered by smoke + e2e)
 - [x] Browser E2E (`npm run e2e`, 25 checks) — guest checkout → confirmation → track-order (status + items), register → verify email → auto sign-in → home, forgot → reset → sign-in, contact, admin status transition. Found + fixed: checkout redirect race (order landed on empty cart) and track-order crash (rendered address the lookup API deliberately omits)
 - [ ] Phase 6 (manual) — Lighthouse runs, content/copy pass, accessibility review, Rich Results Test
-- [ ] Phase 7 — Production deployment (CI ready; Railway `railway.json` + Vercel-native, no Docker; needs Atlas/Cloudinary/Brevo env + DNS)
+- [x] Phase 7 — Production deployment (LIVE: Vercel web `shahid-insaf-shoes.vercel.app` + Railway API `shahid-insaf-shoes-production.up.railway.app`, Atlas `sis_prod` seeded, Cloudinary + Brevo wired; custom DNS pending if a domain is bought)
 - [ ] Phase 8 — Post-launch

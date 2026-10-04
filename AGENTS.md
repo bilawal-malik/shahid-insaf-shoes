@@ -21,7 +21,7 @@ npm workspaces monorepo (`apps/*`): `apps/web` = Next.js 16 **JavaScript** App R
 - API exits at boot if `MONGODB_URI`/`JWT_SECRET` missing; in dev it still boots when Mongo is unreachable (subsequent requests 500)
 - `.env*`, `temp.txt`, `atlas.env` are gitignored **and hold real credentials** — never commit, print, or paste them
 - Uploads go to Cloudinary when configured, else to local disk `apps/api/uploads` (served at `/uploads`; not synced to hosting)
-- Deploy: **no Docker** — Railway deploys the API from repo root via `railway.json` (Nixpacks, `npm ci` workspaces, start `npm run start -w apps/api`, healthcheck `/health`); Vercel builds `apps/web` with Root Directory `apps/web`. API listens on `process.env.PORT || 4000`
+- Deploy: **no Docker** — Railway hosts the **API only** (service settings live server-side: start `npm run start -w apps/api`, healthcheck `/health`; `railway.json` at root is deprecated/ignored by CLI 5.63 — real config is `.railway/railway.ts`, gitignored, applied via `railway config apply`; **gotcha:** apply deletes undeclared variables → re-set them with `railway variable set … --skip-deploys` after every apply). Deploy commands: `railway up` (CLI) or push to `main` (GitHub source reconnected). Vercel hosts the **web** — `vercel --prod` from `apps/web` (project `binary-bombers1/shahid-insaf-shoes`; Git connection NOT linked — pushes don't build on Vercel yet; deployment protection disabled via `vercel project protection disable --sso`). Live: web `https://shahid-insaf-shoes.vercel.app`, API `https://shahid-insaf-shoes-production.up.railway.app` (`WEB_ORIGIN` set to the web URL). API listens on `process.env.PORT || 4000`
 
 ## Request flow (don't break)
 

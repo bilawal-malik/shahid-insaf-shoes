@@ -85,6 +85,16 @@ NEXT_PUBLIC_SITE_NAME=SIS — Shahid Insaf Shoes
 
 ## 3. Railway (Express API)
 
+> **Current live state (2026-10-04):** service `shahid-insaf-shoes` (project `18a25a0b…`), region `iad`, public domain `https://shahid-insaf-shoes-production.up.railway.app`, GitHub source `bilawal-malik/shahid-insaf-shoes@main` reconnected. Service settings (start `npm run start -w apps/api`, healthcheck `/health`) live **server-side**, applied via `railway config apply` from `.railway/railway.ts` (the root `railway.json` is deprecated — CLI 5.63 warns and did **not** honor it on `railway up`).
+>
+> **Gotchas hit (do not re-learn):**
+>
+> 1. `railway config apply --confirm-destructive` **deletes every variable not declared** in the authoring file — always re-set all 10 vars afterwards with `railway variable set KEY=… --skip-deploys` (sources: `apps/api/.env` + `temp.txt`; DB name swapped to `sis_prod`).
+> 2. `railway config plan/apply` evaluates `.railway/railway.ts` via the npm `railway` SDK, which calls `execFileSync(process.env._ || 'railway', ['--version'])` — broken on Windows (no `railway.exe` on PATH). Fix: `$env:_ = 'C:\Users\Administrator\AppData\Roaming\npm\node_modules\@railway\cli\bin\railway.exe'` before running.
+> 3. Atlas **Network Access must be `0.0.0.0/0`** (§2.3) — Railway egress IPs are dynamic; the API exits at boot with `[db] connection failed` otherwise (prod only).
+> 4. Deploy: `railway up` from repo root, or push to `main`. Environment: `NODE_ENV`, `MONGODB_URI` (`…/sis_prod`), `JWT_SECRET`, `JWT_EXPIRES_IN`, `WEB_ORIGIN` (= web URL), `BREVO_API_KEY`, `MAIL_FROM`, `NOTIFY_EMAIL`, `CLOUDINARY_CLOUD_NAME/API_KEY/API_SECRET`.
+> 5. Prod DB seeded: 24 products, 7 categories, 12 orders, 5 customers, 3 admins (`admin@sis.pk`, `bilawal@gmail.com`, `shahid@gmail.com` — all seeded passwords as in the seed file).
+
 1. New project → **Deploy from GitHub** → root of repo
 2. Configure:
    - **Root Directory:** `apps/api` (or monorepo-aware Nixpacks config)
@@ -104,6 +114,8 @@ NEXT_PUBLIC_SITE_NAME=SIS — Shahid Insaf Shoes
 ---
 
 ## 4. Vercel (Next.js)
+
+> **Current live state (2026-10-04):** project `binary-bombers1/shahid-insaf-shoes`, production alias **`https://shahid-insaf-shoes.vercel.app`**. Deployed with the CLI from `apps/web` (`vercel login` → `vercel link --project shahid-insaf-shoes` → `vercel env add … production` → `vercel --prod --yes`). Env: `API_URL` (= Railway URL + `/api/v1`, stored as secret), `NEXT_PUBLIC_SITE_NAME`, `NEXT_PUBLIC_SITE_URL` (= alias URL, type config). **Deployment Protection disabled** (`vercel project protection disable shahid-insaf-shoes --sso`) — re-enable only for previews. **Git connection NOT linked** (Vercel account `binary-bombers1` has no GitHub login connection) — pushes do **not** build on Vercel yet; deploy via CLI or connect GitHub in dashboard (`vercel git connect`).
 
 1. Import Git repo → framework auto: **Next.js**
 2. **Root Directory:** `apps/web` (Vercel monorepo support) → build command auto `next build`
