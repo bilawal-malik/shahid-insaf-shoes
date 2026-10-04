@@ -65,9 +65,7 @@ export default async function ProductPage({ params }) {
       url: `${siteUrl}/products/${product.slug}`,
       priceCurrency: 'PKR',
       price: product.price,
-      availability: inStock
-        ? 'https://schema.org/InStock'
-        : 'https://schema.org/OutOfStock',
+      availability: inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
     },
   };
 
@@ -101,7 +99,10 @@ export default async function ProductPage({ params }) {
         items={[
           { name: 'Home', href: '/' },
           { name: 'Products', href: '/products' },
-          { name: product.category?.name || 'Category', href: `/categories/${product.category?.slug}` },
+          {
+            name: product.category?.name || 'Category',
+            href: `/categories/${product.category?.slug}`,
+          },
           { name: product.name },
         ]}
       />
@@ -130,8 +131,8 @@ export default async function ProductPage({ params }) {
                 Materials &amp; Care
               </summary>
               <p className="mt-2 text-sm leading-relaxed text-ink-soft">
-                Made with quality leather and durable soles. Wipe clean with a soft dry cloth.
-                Avoid prolonged exposure to water. Store in a cool, dry place.
+                Made with quality leather and durable soles. Wipe clean with a soft dry cloth. Avoid
+                prolonged exposure to water. Store in a cool, dry place.
               </p>
             </details>
             <details className="group rounded-lg border border-line px-4 py-3">
@@ -158,8 +159,12 @@ export default async function ProductPage({ params }) {
         <div className="rounded-xl border border-line bg-surface p-5">
           <h3 className="text-sm font-semibold text-ink">Size Guide</h3>
           <p className="mt-2 text-sm leading-relaxed text-ink-soft">
-            Available sizes: {product.variants.map((v) => v.size).filter((v, i, a) => a.indexOf(v) === i).join(', ')}.
-            Standard Pakistani fitting — if you are between sizes, we recommend going one size up.
+            Available sizes:{' '}
+            {product.variants
+              .map((v) => v.size)
+              .filter((v, i, a) => a.indexOf(v) === i)
+              .join(', ')}
+            . Standard Pakistani fitting — if you are between sizes, we recommend going one size up.
           </p>
           <Link
             href="/contact"

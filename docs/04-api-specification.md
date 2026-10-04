@@ -16,15 +16,19 @@
 
 ## 1. Auth — `/auth`
 
-| #   | Method & Path                | Access | Purpose                                                            |
-| --- | ---------------------------- | ------ | ------------------------------------------------------------------ |
-| 1.1 | `POST /auth/register`        | 🌐     | Create customer `{name, email, phone, password}` → `{user, token}` |
-| 1.2 | `POST /auth/login` 🔒        | 🌐     | `{email, password}` → `{user, token}` — works for admin + customer |
-| 1.3 | `POST /auth/logout`          | 👤     | Clears cookie (proxy) / client drops token                         |
-| 1.4 | `GET /auth/me`               | 👤     | Current user profile (401 if none)                                 |
-| 1.5 | `PATCH /auth/me`             | 👤     | Update `{name, phone, email}`                                      |
-| 1.6 | `PATCH /auth/me/password` 🔒 | 👤     | `{currentPassword, newPassword}`                                   |
-| 1.7 | `GET /auth/admin-check`      | 🛡️     | `{ ok: true }` if `role === 'admin'` — used by admin layout guard  |
+| #    | Method & Path                       | Access | Purpose                                                                                                                                                               |
+| ---- | ----------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.1  | `POST /auth/register` 🔒            | 🌐     | Create customer `{name, email, phone, password}` → `{user, requiresVerification, dev.otp?}` — **no token until verified**; emails a 6-digit code (15-min, 5 attempts) |
+| 1.1a | `POST /auth/verify-email` 🔒        | 🌐     | `{email, otp}` → `{ok, user}` + sets `sis_jwt` session cookie — activates the account **and signs the user in** (idempotent if already verified)                      |
+| 1.1b | `POST /auth/resend-verification` 🔒 | 🌐     | `{email}` → always `{ok}`; sends a new code if an unverified account exists; `dev.otp` in non-prod                                                                    |
+| 1.2  | `POST /auth/login` 🔒               | 🌐     | `{email, password}` → `{user, token}` — **403 `EMAIL_NOT_VERIFIED`** if the email is unverified (after password check)                                                |
+| 1.3  | `POST /auth/logout`                 | 👤     | Clears cookie (proxy) / client drops token                                                                                                                            |
+| 1.4  | `GET /auth/me`                      | 👤     | Current user profile (401 if none)                                                                                                                                    |
+| 1.5  | `PATCH /auth/me`                    | 👤     | Update `{name, phone, email}`                                                                                                                                         |
+| 1.6  | `PATCH /auth/me/password` 🔒        | 👤     | `{currentPassword, newPassword}`                                                                                                                                      |
+| 1.7  | `GET /auth/admin-check`             | 🛡️     | `{ ok: true }` if `role === 'admin'` — used by admin layout guard                                                                                                     |
+| 1.8  | `POST /auth/forgot-password` 🔒     | 🌐     | `{email}` → always `{ok}`; **emails** the reset code + link via mailService (Brevo/SMTP); `dev.otp` + `dev.resetUrl` (shown on screen)                                |
+| 1.9  | `POST /auth/reset-password` 🔒      | 🌐     | `{token, newPassword}` (link) **or** `{email, otp, newPassword}` (code) → `{ok}` — 30-min expiry, 5 wrong-code attempts then lock                                     |
 
 **JWT payload:** `{ sub: userId, role, name }` · 7 days · httpOnly cookie `sis_jwt` set by Next proxy.
 
@@ -158,13 +162,13 @@
 
 ### 5.5 Orders
 
-| #     | Method & Path                        | Purpose                                                                    |
-| ----- | ------------------------------------ | -------------------------------------------------------------------------- |
-| 5.5.1 | `GET /admin/orders`                  | `q (number/phone/name), status, from, to, page, limit, sort`               |
-| 5.5.2 | `GET /admin/orders/:id`              | Full detail: customer, items w/ images, pricing, history                   |
-| 5.5.3 | `PATCH /admin/orders/:id/status`     | `{ status, note? }` — **validates transition map**; side-effects per 03 §4 |
-| 5.5.4 | `PATCH /admin/orders/:id/note`       | `{ internalNote }`                                                         |
-| 5.5.5 | `GET /admin/orders/:id/packing-slip` | Data for print view (or same as 5.5.2 with print layout client-side)       |
+| #     | Method & Path                    | Purpose                                                                                       |
+| ----- | -------------------------------- | --------------------------------------------------------------------------------------------- |
+| 5.5.1 | `GET /admin/orders`              | `q (number/phone/name), status, from, to, page, limit, sort`                                  |
+| 5.5.2 | `GET /admin/orders/:id`          | Full detail: customer, items w/ images, pricing, history                                      |
+| 5.5.3 | `PATCH /admin/orders/:id/status` | `{ status, note? }` — **validates transition map**; side-effects per 03 §4                    |
+| 5.5.4 | `PATCH /admin/orders/:id/note`   | `{ internalNote }`                                                                            |
+| 5.5.5 | (client-side print)              | Packing slip = detail from **5.5.2** rendered with `@media print` CSS — no dedicated endpoint |
 
 **Transition map (server-enforced):**
 
@@ -206,11 +210,21 @@ Invalid → `400 INVALID_TRANSITION` with `{ allowed: [...] }`.
 
 ---
 
+### 5.9 Mail (development only)
+
+| #     | Method & Path                     | Access | Purpose                                                                                                                                                                    |
+| ----- | --------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 5.9.1 | `GET /admin/mail/outbox?limit=50` | 👑     | Last 50 outbound mails (recipient, subject, body, `sent`/`skipped`/`error`, `kind`) plus `smtpConfigured` + `notifyEmail`. **404 in production** — no outbox exists there. |
+
+Transactional sends (all fire-and-forget via `mailService.sendMail`, which never throws): `kind: reset` (forgot-password code + link), `order-placed` (customer confirmation + admin alert to `NOTIFY_EMAIL`), `order-status` (confirmed/shipped/delivered/cancelled/returned), `contact` (admin alert).
+
+---
+
 ## 6. Contact — `/contact`
 
-| #   | Method & Path      | Access | Purpose                                                                                      |
-| --- | ------------------ | ------ | -------------------------------------------------------------------------------------------- |
-| 6.1 | `POST /contact` 🔒 | 🌐     | `{ name, email?, phone?, message }` → stores `ContactMessage` + (Phase 8) emails store inbox |
+| #   | Method & Path      | Access | Purpose                                                                                           |
+| --- | ------------------ | ------ | ------------------------------------------------------------------------------------------------- |
+| 6.1 | `POST /contact` 🔒 | 🌐     | `{ name, email?, phone?, message }` → stores `ContactMessage` + emails an alert to `NOTIFY_EMAIL` |
 
 `ContactMessage` collection: `{ name, email, phone, message, createdAt, isRead }` — admin list optional in v1.1 (fallback: keep collection for now, UI later).
 
@@ -231,7 +245,7 @@ Invalid → `400 INVALID_TRANSITION` with `{ allowed: [...] }`.
 ANY  /api/proxy/[...path]   →  ${API_URL}/api/v1/${path}
      • forwards method, body, query
      • attaches Authorization from sis_jwt cookie
-     • sets/clears cookie when path is /auth/login|/auth/logout|/auth/register
+     • sets/clears cookie when path is /auth/login|/auth/logout
      • caches GET /config, /products lightly via Next fetch revalidate
 ```
 

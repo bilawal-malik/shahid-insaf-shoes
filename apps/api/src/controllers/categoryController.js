@@ -26,6 +26,14 @@ export const tree = asyncHandler(async (_req, res) => {
     else roots.push(node);
   }
 
+  const assignCounts = (node) => {
+    let total = countMap.get(node._id.toString()) || 0;
+    for (const child of node.children) total += assignCounts(child);
+    node.productCount = total;
+    return total;
+  };
+  for (const root of roots) assignCounts(root);
+
   res.json({ items: roots });
 });
 

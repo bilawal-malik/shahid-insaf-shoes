@@ -5,10 +5,35 @@ import { signToken, authCookieOptions } from '../utils/jwt.js';
 import { asyncHandler, ApiError } from '../utils/apiError.js';
 
 export const register = asyncHandler(async (req, res) => {
-  const user = await authService.registerCustomer(req.body);
+  const { user, otp } = await authService.registerCustomer(req.body);
+  const payload = {
+    user,
+    requiresVerification: true,
+    message: `We emailed a 6-digit verification code to ${user.email}.`,
+  };
+  if (otp && !env.isProd) payload.dev = { otp };
+  res.status(201).json(payload);
+});
+
+export const verifyEmail = asyncHandler(async (req, res) => {
+  const user = await authService.verifyEmail(req.body);
   const token = signToken(user);
   res.cookie('sis_jwt', token, authCookieOptions());
-  res.status(201).json({ user, token });
+  res.json({
+    ok: true,
+    user: authService.toPublicUser(user),
+    message: 'Email verified. You are signed in.',
+  });
+});
+
+export const resendVerification = asyncHandler(async (req, res) => {
+  const dev = await authService.resendVerification(req.body.email);
+  const payload = {
+    ok: true,
+    message: 'If an unverified account exists for that email, a new code has been sent.',
+  };
+  if (dev && !env.isProd) payload.dev = { otp: dev.otp };
+  res.json(payload);
 });
 
 export const login = asyncHandler(async (req, res) => {
@@ -46,4 +71,24 @@ export const changePassword = asyncHandler(async (req, res) => {
 
 export const adminCheck = asyncHandler(async (req, res) => {
   res.json({ ok: true, role: req.user.role });
+});
+
+export const forgotPassword = asyncHandler(async (req, res) => {
+  const dev = await authService.forgotPassword(req.body.email);
+  const payload = {
+    ok: true,
+    message: 'If an account exists for that email, a reset code has been sent.',
+  };
+  if (dev && !env.isProd) {
+    payload.dev = {
+      otp: dev.otp,
+      resetUrl: `${env.webOrigin}/reset-password?token=${dev.token}`,
+    };
+  }
+  res.json(payload);
+});
+
+export const resetPassword = asyncHandler(async (req, res) => {
+  await authService.resetPassword(req.body);
+  res.json({ ok: true, message: 'Password updated. You can sign in now.' });
 });

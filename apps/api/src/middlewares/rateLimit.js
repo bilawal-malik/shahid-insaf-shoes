@@ -23,6 +23,30 @@ export const registerLimiter = rateLimit({
   message: message('registration'),
 });
 
+export const resetLimiter = rateLimit({
+  windowMs: 60_000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: message('password reset'),
+});
+
+export const verifyLimiter = rateLimit({
+  windowMs: 60_000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: message('email verification'),
+});
+
+export const resendLimiter = rateLimit({
+  windowMs: 60_000,
+  limit: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: message('resend verification code'),
+});
+
 export const orderLimiter = rateLimit({
   windowMs: 60_000,
   limit: 10,

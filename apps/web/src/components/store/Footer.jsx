@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { Phone, Mail, MapPin, MessageCircle, Truck, ShieldCheck, RotateCcw } from 'lucide-react';
 
 export default function Footer({ config, categories = [] }) {
@@ -39,8 +40,14 @@ export default function Footer({ config, categories = [] }) {
       <div className="container-app grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-sm font-black tracking-tight text-brand-800">
-              SIS
+            <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg bg-white">
+              <Image
+                src="/logo.jpeg"
+                alt="Shahid Insaf Shoes"
+                width={36}
+                height={36}
+                className="h-full w-full object-contain"
+              />
             </span>
             <span className="text-sm font-extrabold tracking-tight text-white">
               Shahid Insaf Shoes
@@ -82,14 +89,20 @@ export default function Footer({ config, categories = [] }) {
           <ul className="mt-4 space-y-3 text-sm text-brand-300">
             {store?.phone && (
               <li>
-                <a href={`tel:${store.phone}`} className="flex items-center gap-2.5 hover:text-white">
+                <a
+                  href={`tel:${store.phone}`}
+                  className="flex items-center gap-2.5 hover:text-white"
+                >
                   <Phone className="h-4 w-4 shrink-0" /> {store.phone}
                 </a>
               </li>
             )}
             {store?.email && (
               <li>
-                <a href={`mailto:${store.email}`} className="flex items-center gap-2.5 hover:text-white">
+                <a
+                  href={`mailto:${store.email}`}
+                  className="flex items-center gap-2.5 hover:text-white"
+                >
                   <Mail className="h-4 w-4 shrink-0" /> {store.email}
                 </a>
               </li>

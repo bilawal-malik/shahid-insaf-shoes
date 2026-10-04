@@ -39,11 +39,25 @@ const FAQS = [
 ];
 
 export default function FaqPage() {
+  const faqLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: FAQS.map((item) => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: { '@type': 'Answer', text: item.a },
+    })),
+  };
+
   return (
     <InfoShell
       title="Frequently Asked Questions"
       subtitle="Shipping, payment, sizing and orders — quick answers."
     >
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }}
+      />
       <div className="space-y-2.5">
         {FAQS.map((item) => (
           <details key={item.q} className="group rounded-lg border border-line px-4 py-3">

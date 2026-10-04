@@ -1,5 +1,16 @@
 export const PK_PHONE = /^(?:\+92|0)?3\d{9}$/;
 
+export function slugify(text) {
+  return (
+    String(text)
+      .toLowerCase()
+      .trim()
+      .replace(/['\u2019]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'item'
+  );
+}
+
 export const PROVINCES = [
   'Punjab',
   'Sindh',

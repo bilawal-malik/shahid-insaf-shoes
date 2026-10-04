@@ -47,7 +47,10 @@ const orderSchema = z.object({
 });
 
 const lookupSchema = z.object({
-  orderNumber: z.string().trim().regex(/^SIS-\d{4}-\d{5}$/, 'Invalid order number'),
+  orderNumber: z
+    .string()
+    .trim()
+    .regex(/^SIS-\d{4}-\d{5}$/, 'Invalid order number'),
   phone: z.string().trim().regex(PK_PHONE, 'Enter a valid Pakistani mobile number (03XXXXXXXXX)'),
 });
 

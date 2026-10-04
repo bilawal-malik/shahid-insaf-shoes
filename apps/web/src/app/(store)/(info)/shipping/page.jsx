@@ -3,7 +3,8 @@ import InfoShell, { InfoSection } from '@/components/store/InfoShell';
 
 export const metadata = {
   title: 'Shipping & Delivery',
-  description: 'Delivery times, cash on delivery and shipping fees at SIS — 3-5 days across Pakistan.',
+  description:
+    'Delivery times, cash on delivery and shipping fees at SIS — 3-5 days across Pakistan.',
   alternates: { canonical: '/shipping' },
 };
 
@@ -49,7 +50,11 @@ export default async function ShippingPage() {
       <InfoSection heading="Need help?">
         <p>
           If your order is delayed beyond the estimated window, contact us with your order number —
-          see the <a href="/contact" className="font-medium text-brand-700 hover:text-brand-800">contact page</a>.
+          see the{' '}
+          <a href="/contact" className="font-medium text-brand-700 hover:text-brand-800">
+            contact page
+          </a>
+          .
         </p>
       </InfoSection>
     </InfoShell>

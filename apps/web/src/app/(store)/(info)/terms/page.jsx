@@ -11,25 +11,29 @@ export default function TermsPage() {
     <InfoShell title="Terms & Conditions" subtitle="Last updated: October 2026.">
       <InfoSection heading="Using this store">
         <p>
-          By using this website you agree to these terms. If you do not agree, please do not use
-          the store. You must provide accurate information when placing an order.
+          By using this website you agree to these terms. If you do not agree, please do not use the
+          store. You must provide accurate information when placing an order.
         </p>
       </InfoSection>
 
       <InfoSection heading="Orders & pricing">
         <ul className="list-disc space-y-1.5 pl-5">
           <li>All prices are in Pakistani Rupees (PKR)</li>
-          <li>An order is confirmed once we verify it; we may cancel orders with clear pricing
-            errors or stock issues (with a full explanation)</li>
-          <li>Stock is confirmed at the time of packing; rare double-sales are handled per the
-            exchange policy</li>
+          <li>
+            An order is confirmed once we verify it; we may cancel orders with clear pricing errors
+            or stock issues (with a full explanation)
+          </li>
+          <li>
+            Stock is confirmed at the time of packing; rare double-sales are handled per the
+            exchange policy
+          </li>
         </ul>
       </InfoSection>
 
       <InfoSection heading="Payment">
         <p>
-          Payment is Cash on Delivery unless otherwise stated. You pay the courier when you
-          receive your parcel.
+          Payment is Cash on Delivery unless otherwise stated. You pay the courier when you receive
+          your parcel.
         </p>
       </InfoSection>
 

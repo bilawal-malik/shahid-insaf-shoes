@@ -53,6 +53,7 @@ Tasks:
 - [x] `configService` w/ cache · `counterService` for order numbers
 - [x] Seed script (admin, categories, products, demo orders, config) — idempotent, `--force` to wipe
 - [x] Auth: register/login/logout/me/update/password/admin-check + JWT middleware + role guard
+- [x] Email verification on register: 6-digit OTP (15-min, 5 attempts), `POST /auth/verify-email` + `/auth/resend-verification`, login blocked with 403 `EMAIL_NOT_VERIFIED` until verified, verify mail template
 - [x] Public routes: products (list/filters/sort/pagination), product by slug (+related), categories tree, search, `/config`
 - [x] Validation (zod 4) + central error handler + ApiError + rate limit on auth
 - [x] Smoke tests: `npm run smoke -w apps/api` → **26/26 passing**
@@ -104,40 +105,44 @@ Tasks:
 
 ---
 
-## P4 — Admin: auth + catalogue
+## P4 — Admin: auth + catalogue ✅
 
 **Goal:** admin runs the catalogue without the DB.
 
 Tasks:
 
-- [ ] Admin route guard (role check via `/auth/admin-check`) + login redirect flow
-- [ ] Admin shell: sidebar, topbar, responsive drawer
-- [ ] Dashboard **data endpoint** (`/admin/dashboard`) + page skeleton (fill in P5)
-- [ ] Products list (search/filter/pagination/status) + quick status toggles
-- [ ] Product create/edit form: variants matrix (+bulk generator), images upload via Cloudinary (`/admin/upload`), flags, SEO fields, slug handling
-- [ ] Archive/restore
-- [ ] Categories tree CRUD with validation (no cycles, delete guards)
-- [ ] Settings: admin profile + password
+- [x] Admin route guard (server-side cookie → `/auth/admin-check` in `app/admin/layout.jsx`; no token → `/login?next=/admin`, non-admin → `/`) + login redirect flow
+- [x] Admin shell: sidebar, topbar, responsive drawer (P5 nav items present but disabled "soon")
+- [x] Dashboard **data endpoint** (`/admin/dashboard` — KPIs today/7d/30d, AOV, 14-day sales chart, recent orders, low stock) + page with KPI cards, CSS bar chart (recharts stays P5)
+- [x] Products list (debounced search/status/category filters, pagination, URL-friendly client state) + quick status/feature toggles
+- [x] Product create/edit form: variants matrix (+bulk size/SKU generator), images upload via `/admin/upload` (local fallback now, Cloudinary when creds arrive) or URL, flags, SEO fields w/ Google preview, slug handling; variant sync on update (add/update/remove, order-referenced variants deactivate instead of delete)
+- [x] Archive/restore (`DELETE`/`POST …/restore`, hidden from storefront when archived)
+- [x] Categories tree CRUD with validation (cycle guard → `CYCLE` 409, `HAS_CHILDREN`/`HAS_PRODUCTS` delete guards) + Settings: admin profile + password (`app/admin/settings/profile`)
+- [x] Uploads served from API `/uploads` (helmet `crossOriginResourcePolicy: cross-origin`); proxy passes multipart as binary (`arrayBuffer`); `next.config.js` allows localhost:4100 images + `dangerouslyAllowLocalIP` in dev
+- [x] Smoke extended with admin section → **69/69 passing**
 
-**Done when:** admin can create a product with 10 variants + 3 images and it appears on storefront (active) within refresh.
+**Done when:** ✅ admin can create a product with 10 variants + 3 images and it appears on storefront (active) within refresh — verified via proxy (`e2e-p4-sandal`: 10 variants, 3 images, visible with image + 10 sizes); guard redirects verified (no cookie → `/login?next=/admin`, customer → `/`); `next/image` optimizer serves localhost:4100; lint 0, build 25/25.
 
 ---
 
-## P5 — Admin: orders, config, sales
+## P5 — Admin: orders, config, sales ✅
 
 **Goal:** full operations control.
 
 Tasks:
 
-- [ ] Orders list (filters + URL state) + detail page
-- [ ] Status transition endpoint + timeline + confirm dialogs + stock restore rules + packing slip print CSS
-- [ ] Internal notes
-- [ ] Dashboard complete: KPIs, 14-day chart (recharts), recent orders, low-stock, status breakdown
-- [ ] Customers list/detail (+deactivate)
-- [ ] Config editor (shipping flatRate/freeAbove/estimatedDays, store info, announcement, lowStock threshold) + cache invalidation — **verify storefront reflects new shipping fee**
-- [ ] Reports: date-range summary + by-day chart + top products + CSV export
+- [x] Orders list (filters + URL state) + detail page — `app/admin/orders`, `app/admin/orders/[id]`
+- [x] Status transition endpoint + timeline + confirm dialogs + stock restore rules + packing slip print CSS (`PATCH /admin/orders/:id/status`, `print:hidden` shell)
+- [x] Internal notes (`PATCH /admin/orders/:id/note`, admin-only panel)
+- [x] Dashboard complete: KPIs, 14-day chart (CSS bars — recharts skipped deliberately), recent orders, low-stock, status breakdown
+- [x] Customers list/detail (+deactivate blocks login server-side via `isActive`)
+- [x] Config editor (shipping flatRate/freeAbove/estimatedDays, store info, announcement, lowStock threshold) + cache invalidation — storefront reflects within ~60s (ISR `revalidate: 60`)
+- [x] Reports: date-range summary + by-day chart + top products + CSV export (proxy → blob download)
+- [x] Smoke extended with orders/customers/config/reports/mail → **123/123 passing**
 
-**Done when:** full lifecycle Placed→Delivered exercised in UI; shipping fee changed in config alters checkout total; cancel restores stock; report numbers match order list.
+**Done when:** ✅ full lifecycle Placed→Delivered exercised in smoke (transition map enforced, invalid → 400 `INVALID_TRANSITION`, cancel/return restores stock, delivered marks COD paid); `PUT /admin/config` flatRate round-trips to public `/config`; report summary matches order list; lint 0, build passing.
+
+**Note:** wiring the four P5 controllers exposed pre-existing `../../` import paths (they had never been loaded) — fixed to `../`.
 
 ---
 
@@ -147,16 +152,18 @@ Tasks:
 
 Tasks:
 
-- [ ] Metadata audit per route map · canonical · robots · sitemap complete · OG images
-- [ ] JSON-LD complete (Product, Breadcrumb, Organization, FAQ)
-- [ ] Content pass: category/product descriptions, alt text, About/FAQ copy
+- [x] Metadata audit per route map · canonical · robots · sitemap complete · OG images (default `public/og-default.png` + `icon.png`; product/category/home ship their own `og:image`)
+- [x] JSON-LD complete (Organization/WebSite on home, Product + Breadcrumb on PDP, CollectionPage + Breadcrumb on category, FAQPage on `/faq`)
+- [x] Utility routes noindex (`login`, `register`, `forgot/reset-password`, `track-order`, `order-confirmation` split into server `page.jsx` + client view) + robots.txt disallow list expanded
+- [x] 404/403 + error handling UX (`not-found.jsx`, `app/error.jsx`, `app/global-error.jsx`)
+- [ ] Content pass: category/product descriptions, alt text, About/FAQ copy (seed descriptions are placeholders)
 - [ ] Image optimization audit (sizes, priority, aspect ratios)
-- [ ] Suspense/parallel fetch, ISR tuning, no waterfall
+- [ ] Suspense/parallel fetch, ISR tuning, no waterfall — home/category already `Promise.all` + `revalidate`; needs measurement
 - [ ] Accessibility pass (keyboard, contrast, forms)
-- [ ] Lighthouse mobile on home/PDP/category/checkout — fix until targets met
-- [ ] 404/403 pages, error handling UX polish
+- [ ] Lighthouse mobile on home/PDP/category/checkout — fix until targets met (perf 90, SEO 95, a11y 90)
+- [ ] Rich Results Test on PDP + FAQ
 
-**Done when:** Lighthouse ≥ targets (perf 90, SEO 95, a11y 90); Rich Results Test passes on PDP.
+**Done when:** Lighthouse ≥ targets; Rich Results Test passes on PDP.
 
 ---
 
@@ -164,11 +171,18 @@ Tasks:
 
 **Goal:** live store on real domain.
 
-Tasks:
+Code/config side:
+
+- [x] Railway config: root `railway.json` (Nixpacks, `npm ci` workspaces, start `npm run start -w apps/api`, healthcheck `/health`) — **Docker removed by decision; Vercel + Railway only**
+- [x] `.github/workflows/ci.yml` — `npm ci` → lint → format:check → build on push/PR
+- [x] Env vars documented (doc 08 §1); `.env.example` matches
+
+Account/dashboard side (cannot be done from the repo):
 
 - [ ] MongoDB Atlas production cluster + DB user + IP allowlist (0.0.0.0/0 for Vercel/Railway egress — document tradeoff; use Atlas App alternatives later if needed)
-- [ ] Railway: deploy `apps/api` (root Dockerfile or Nixpacks), health check `/health`, env vars, generate `api.<domain>` subdomain
-- [ ] Vercel: deploy `apps/web`, env vars (`API_URL`), custom domain, apex/www decision
+- [ ] Railway: deploy from GitHub (repo root — `railway.json` picks start command + `/health`), env vars (§1.1), generate `api.<domain>` subdomain
+- [ ] Vercel: deploy `apps/web` (Root Directory = `apps/web`), env vars (`API_URL`), custom domain, apex/www decision
+- [ ] Seed prod DB: `node apps/api/src/seed/index.js` with prod `MONGODB_URI` (admin + 24 products + 5 customers + 12 orders)
 - [ ] Cloudinary prod account + upload presets env
 - [ ] Seeds for prod (admin + real catalogue via admin UI)
 - [ ] Post-launch verification checklist (below)
@@ -189,18 +203,18 @@ Tasks:
 
 ## P8 — Post-launch backlog (prioritized)
 
-| Priority | Item                                                     | Notes                                                                                                                                                     |
-| -------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1        | Transactional email (order confirmation, status updates) | Resend/SMTP; single `notificationService`                                                                                                                 |
-| 2        | **Online payment integration**                           | Design already ready: `payment.method/status`; gateway via Express (JazzCash/Easypaisa/Stripe- PK) — checkout step + webhook route + admin reconciliation |
-| 3        | Product reviews (simple, moderated)                      | `reviews` collection                                                                                                                                      |
-| 4        | Coupon codes                                             | `coupons` collection + `pricing.discount` wiring                                                                                                          |
-| 5        | Wishlist                                                 |                                                                                                                                                           |
-| 6        | Abandoned cart emails                                    | needs 2+                                                                                                                                                  |
-| 7        | WhatsApp order share button                              | quick win                                                                                                                                                 |
-| 8        | Blog / size guide content                                | SEO growth                                                                                                                                                |
-| 9        | Contact inbox in admin                                   | `ContactMessage` already collected                                                                                                                        |
-| 10       | Multi-admin + roles (RBAC)                               | only if team grows — explicitly out of v1                                                                                                                 |
+| Priority | Item                                | Notes                                                                                                                                                                                                    |
+| -------- | ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1        | ~~Transactional email~~ ✅          | **Done pre-launch:** reset codes, order confirmation, status updates, contact + new-order alerts — `mailService.js` (Brevo REST or SMTP) + templates; dev outbox `GET /admin/mail/outbox`; smoke-covered |
+| 2        | **Online payment integration**      | Design already ready: `payment.method/status`; gateway via Express (JazzCash/Easypaisa/Stripe- PK) — checkout step + webhook route + admin reconciliation                                                |
+| 3        | Product reviews (simple, moderated) | `reviews` collection                                                                                                                                                                                     |
+| 4        | Coupon codes                        | `coupons` collection + `pricing.discount` wiring                                                                                                                                                         |
+| 5        | Wishlist                            |                                                                                                                                                                                                          |
+| 6        | Abandoned cart emails               | needs 2+                                                                                                                                                                                                 |
+| 7        | WhatsApp order share button         | quick win                                                                                                                                                                                                |
+| 8        | Blog / size guide content           | SEO growth                                                                                                                                                                                               |
+| 9        | Contact inbox in admin              | `ContactMessage` already collected                                                                                                                                                                       |
+| 10       | Multi-admin + roles (RBAC)          | only if team grows — explicitly out of v1                                                                                                                                                                |
 
 ---
 

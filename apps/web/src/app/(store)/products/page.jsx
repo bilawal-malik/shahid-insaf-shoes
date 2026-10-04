@@ -38,7 +38,9 @@ export default async function ProductsPage({ searchParams }) {
       <Breadcrumbs
         items={[
           { name: 'Home', href: '/' },
-          ...(activeCategory ? [{ name: 'Products', href: '/products' }, { name: activeCategory.name }] : [{ name: 'All Products' }]),
+          ...(activeCategory
+            ? [{ name: 'Products', href: '/products' }, { name: activeCategory.name }]
+            : [{ name: 'All Products' }]),
         ]}
       />
 
@@ -95,7 +97,8 @@ export default async function ProductsPage({ searchParams }) {
       </div>
 
       <p className="mt-10 text-xs text-ink-mute">
-        Need help choosing? Call or WhatsApp us — see links in the footer. · {siteName.split(' - ')[0]}
+        Need help choosing? Call or WhatsApp us — see links in the footer. ·{' '}
+        {siteName.split(' - ')[0]}
       </p>
     </div>
   );

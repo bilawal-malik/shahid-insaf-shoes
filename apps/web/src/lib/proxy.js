@@ -4,6 +4,8 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3100';
 const PRIVATE_PREFIXES = [
   '/auth/login',
   '/auth/register',
+  '/auth/verify-email',
+  '/auth/resend-verification',
   '/auth/logout',
   '/admin',
   '/carts',
@@ -37,7 +39,10 @@ export async function proxyRequest(request, params) {
   const res = await fetch(target, {
     method: request.method,
     headers,
-    body: request.method === 'GET' || request.method === 'HEAD' ? undefined : await request.text(),
+    body:
+      request.method === 'GET' || request.method === 'HEAD'
+        ? undefined
+        : await request.arrayBuffer(),
     cache: 'no-store',
     redirect: 'manual',
   });

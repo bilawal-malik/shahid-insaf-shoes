@@ -13,6 +13,18 @@ const env = {
     apiKey: process.env.CLOUDINARY_API_KEY,
     apiSecret: process.env.CLOUDINARY_API_SECRET,
   },
+  mail: {
+    host: process.env.SMTP_HOST || '',
+    port: Number(process.env.SMTP_PORT) || 587,
+    secure: process.env.SMTP_SECURE
+      ? process.env.SMTP_SECURE === 'true'
+      : Number(process.env.SMTP_PORT) === 465,
+    user: process.env.SMTP_USER || '',
+    pass: process.env.SMTP_PASS || '',
+    from: process.env.MAIL_FROM || 'SIS Shoes <no-reply@localhost>',
+    notify: process.env.NOTIFY_EMAIL || '',
+    brevoKey: process.env.BREVO_API_KEY || '',
+  },
 };
 
 const required = ['mongodbUri', 'jwtSecret'];

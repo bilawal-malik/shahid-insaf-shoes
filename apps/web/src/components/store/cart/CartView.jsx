@@ -38,7 +38,8 @@ export default function CartView({ shipping }) {
           <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-ink">Your Cart</h1>
         </div>
         <span className="text-sm text-ink-soft">
-          {items.reduce((n, i) => n + i.qty, 0)} item{items.reduce((n, i) => n + i.qty, 0) === 1 ? '' : 's'}
+          {items.reduce((n, i) => n + i.qty, 0)} item
+          {items.reduce((n, i) => n + i.qty, 0) === 1 ? '' : 's'}
         </span>
       </div>
 
@@ -47,10 +48,7 @@ export default function CartView({ shipping }) {
           {items.map((item) => {
             const overStock = item.qty >= item.maxStock;
             return (
-              <div
-                key={item.key}
-                className="card flex gap-4 p-4 transition-colors relative"
-              >
+              <div key={item.key} className="card flex gap-4 p-4 transition-colors relative">
                 <Link
                   href={`/products/${item.slug}`}
                   className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-surface sm:h-24 sm:w-24"
@@ -112,7 +110,9 @@ export default function CartView({ shipping }) {
                       </button>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-bold text-ink">{formatPKR(item.price * item.qty)}</p>
+                      <p className="text-sm font-bold text-ink">
+                        {formatPKR(item.price * item.qty)}
+                      </p>
                       {overStock && (
                         <p className="text-[11px] font-medium text-amber-600">
                           Only {item.maxStock} in stock

@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+const apiUrl = process.env.API_URL || 'http://localhost:4100/api/v1';
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
@@ -6,11 +7,16 @@ const nextConfig = {
     remotePatterns: [
       { protocol: 'https', hostname: 'res.cloudinary.com' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'images.pexels.com' },
+      { protocol: 'https', hostname: 'upload.wikimedia.org' },
       { protocol: 'https', hostname: 'picsum.photos' },
+      { protocol: 'http', hostname: 'localhost', port: '4100' },
+      { protocol: 'http', hostname: '127.0.0.1', port: '4100' },
+      { protocol: 'https', hostname: '**.railway.app' },
     ],
+    dangerouslyAllowLocalIP: apiUrl.includes('localhost') || apiUrl.includes('127.0.0.1'),
   },
   async rewrites() {
-    const apiUrl = process.env.API_URL || 'http://localhost:4100/api/v1';
     return [
       {
         source: '/backend/:path*',

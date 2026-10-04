@@ -51,12 +51,24 @@ export default function ContactForm() {
           <input name="name" className="input" placeholder="Your name" autoComplete="name" />
         </Field>
         <Field label="Phone" error={errors.phone}>
-          <input name="phone" className="input" placeholder="03XXXXXXXXX" inputMode="tel" autoComplete="tel" />
+          <input
+            name="phone"
+            className="input"
+            placeholder="03XXXXXXXXX"
+            inputMode="tel"
+            autoComplete="tel"
+          />
         </Field>
       </div>
 
       <Field label="Email (optional)" error={errors.email}>
-        <input name="email" type="email" className="input" placeholder="you@example.com" autoComplete="email" />
+        <input
+          name="email"
+          type="email"
+          className="input"
+          placeholder="you@example.com"
+          autoComplete="email"
+        />
       </Field>
 
       <Field label="Message" required error={errors.message}>

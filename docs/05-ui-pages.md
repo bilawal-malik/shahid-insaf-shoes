@@ -20,6 +20,9 @@
 /order-confirmation/[orderNumber]    Success page
 /track-order                        Order lookup form → status timeline
 /login  /register                   Auth
+/verify-email                        Enter 6-digit code after register (code emailed only — never shown on screen; resend supported)
+/forgot-password                    Request reset code (dev: OTP + link shown on screen)
+/reset-password                     Reset via ?token= link or email + 6-digit code
 /account                            Profile (guarded)
 /account/orders                     Order history (guarded)
 /account/orders/[id]                Order detail (guarded)
@@ -130,8 +133,11 @@ Single page, 2-3 visual steps (accordion or left-form + right-summary; **right s
 
 ### 2.13 Auth
 
-- **Login:** email + password → redirect `next` param or role-based (admin → /admin)
-- **Register:** name, email, phone, password, confirm
+- **Login:** email + password → redirect `next` param or role-based (admin → /admin) · unverified email → 403 shown with "Verify now" link · after verification shows green "Email verified" banner (`?verified=1`)
+- **Register:** name, email, phone, password, confirm → **redirects to /verify-email** (no session until verified)
+- **Verify email:** email + 6-digit code (sent by email only — no on-screen code) → success → **auto sign-in → redirect to home** · "Resend code" button
+- **Forgot password:** email → dev panel shows 6-digit OTP + reset link (production: emailed)
+- **Reset password:** `?token=` (link) or email + code mode → new password → success → login
 - Centered card layout, logo on top, link to alternate mode
 
 ### 2.14 Account (guarded, simple layout with side nav)

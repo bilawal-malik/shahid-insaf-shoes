@@ -37,8 +37,12 @@ Production-level e-commerce platform for **SIS (Shahid Insaf Shoes)** — a loca
 - [x] Phase 1 — Database + API foundation (models, auth, catalogue API, seed, smoke 26/26)
 - [x] Phase 2 — Storefront browse (home, catalog, category, PDP, search, info pages, JSON-LD)
 - [x] Phase 3 — Cart, checkout, orders (guest + account COD flow, track-order, account pages, smoke 46/46)
-- [ ] Phase 4 — Admin auth + catalogue CRUD
-- [ ] Phase 5 — Admin orders, config, reports
-- [ ] Phase 6 — SEO + performance pass
-- [ ] Phase 7 — Production deployment
+- [x] Phase 4 — Admin auth + catalogue (guard/shell, dashboard, products CRUD + upload, categories, settings, smoke 69/69)
+- [x] Phase 5 — Admin orders, config, reports (orders lifecycle + notes, customers, store config, reports + CSV, smoke 123/123)
+- [x] Phase 6 (code) — SEO + error UX pass (FAQ/Breadcrumb JSON-LD, default OG image + icon, noindex on utility routes, robots, `error.jsx`)
+- [x] Transactional email (Brevo/SMTP transport, reset codes, order confirmation + status updates, contact + new-order alerts, dev outbox, smoke-covered)
+- [x] Email verification on register (6-digit OTP, block-until-verified, resend; OTP delivered by email only — never shown on screen; verify auto-signs-in and redirects home; real Brevo delivery verified; covered by smoke + e2e)
+- [x] Browser E2E (`npm run e2e`, 25 checks) — guest checkout → confirmation → track-order (status + items), register → verify email → auto sign-in → home, forgot → reset → sign-in, contact, admin status transition. Found + fixed: checkout redirect race (order landed on empty cart) and track-order crash (rendered address the lookup API deliberately omits)
+- [ ] Phase 6 (manual) — Lighthouse runs, content/copy pass, accessibility review, Rich Results Test
+- [ ] Phase 7 — Production deployment (CI ready; Railway `railway.json` + Vercel-native, no Docker; needs Atlas/Cloudinary/Brevo env + DNS)
 - [ ] Phase 8 — Post-launch

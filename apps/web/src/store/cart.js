@@ -19,13 +19,13 @@ export const useCartStore = create(
           if (existing) {
             return {
               items: state.items.map((i) =>
-                i.key === key
-                  ? { ...i, qty: Math.min(i.qty + item.qty, item.maxStock) }
-                  : i
+                i.key === key ? { ...i, qty: Math.min(i.qty + item.qty, item.maxStock) } : i
               ),
             };
           }
-          return { items: [...state.items, { ...item, key, qty: Math.min(item.qty, item.maxStock) }] };
+          return {
+            items: [...state.items, { ...item, key, qty: Math.min(item.qty, item.maxStock) }],
+          };
         });
       },
 

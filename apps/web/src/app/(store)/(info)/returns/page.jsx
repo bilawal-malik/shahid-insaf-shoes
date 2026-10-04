@@ -8,10 +8,7 @@ export const metadata = {
 
 export default function ReturnsPage() {
   return (
-    <InfoShell
-      title="Returns & Exchange"
-      subtitle="Simple, fair policies — no fine print games."
-    >
+    <InfoShell title="Returns & Exchange" subtitle="Simple, fair policies — no fine print games.">
       <InfoSection heading="Exchange window">
         <p>
           You can request an exchange within <strong>7 days of delivery</strong> for items that are

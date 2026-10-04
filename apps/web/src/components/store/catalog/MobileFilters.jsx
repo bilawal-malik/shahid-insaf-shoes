@@ -28,7 +28,12 @@ export default function MobileFilters({ categories = [] }) {
           <div className="absolute inset-y-0 right-0 flex w-80 max-w-[88vw] flex-col bg-white shadow-xl">
             <div className="flex items-center justify-between border-b border-line px-4 py-3.5">
               <span className="text-sm font-semibold text-ink">Filters</span>
-              <button type="button" onClick={() => setOpen(false)} aria-label="Close filters" className="p-1.5">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="Close filters"
+                className="p-1.5"
+              >
                 <X className="h-5 w-5" />
               </button>
             </div>

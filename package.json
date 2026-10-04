@@ -17,13 +17,15 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "seed": "npm run seed -w apps/api"
+    "seed": "npm run seed -w apps/api",
+    "e2e": "node scripts/e2e.mjs"
   },
   "devDependencies": {
     "concurrently": "^10.0.5",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.3.8",
     "eslint-config-prettier": "^10.1.8",
+    "playwright": "^1.63.0",
     "prettier": "^3.9.9"
   }
 }

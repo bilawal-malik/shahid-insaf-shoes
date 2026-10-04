@@ -11,6 +11,8 @@ import MobileFilters from '@/components/store/catalog/MobileFilters';
 import SortSelect from '@/components/store/catalog/SortSelect';
 import { spToProductQuery } from '@/lib/catalog';
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3100';
+
 export async function generateMetadata({ params }) {
   const { slug } = await params;
   try {
@@ -59,11 +61,30 @@ export default async function CategoryPage({ params, searchParams }) {
     description: data.category.description || undefined,
   };
 
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: siteUrl },
+      { '@type': 'ListItem', position: 2, name: 'Products', item: `${siteUrl}/products` },
+      ...data.breadcrumb.map((b, i) => ({
+        '@type': 'ListItem',
+        position: i + 3,
+        name: b.name,
+        ...(i < data.breadcrumb.length - 1 ? { item: `${siteUrl}/categories/${b.slug}` } : {}),
+      })),
+    ],
+  };
+
   return (
     <div className="container-app py-6 lg:py-8">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(categoryLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
       />
 
       <Breadcrumbs

@@ -35,11 +35,16 @@ export async function api(path, options = {}) {
  * so httpOnly auth cookies stay same-origin (no CORS).
  */
 export async function apiClient(path, options = {}) {
-  const { headers, ...rest } = options;
+  const { headers, body, ...rest } = options;
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
   const res = await fetch(`/api/proxy${path}`, {
     cache: 'no-store',
     ...rest,
-    headers: { 'Content-Type': 'application/json', ...(headers || {}) },
+    body,
+    headers: {
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+      ...headers,
+    },
   });
   return handleResponse(res);
 }

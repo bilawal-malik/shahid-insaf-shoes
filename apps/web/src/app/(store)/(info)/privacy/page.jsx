@@ -12,8 +12,8 @@ export default function PrivacyPage() {
       <InfoSection heading="Information we collect">
         <p>
           When you place an order or contact us, we collect the information needed to fulfil it:
-          your name, phone number, delivery address, email (if provided), and order details. We
-          also store basic technical data (browser, device) for security and performance.
+          your name, phone number, delivery address, email (if provided), and order details. We also
+          store basic technical data (browser, device) for security and performance.
         </p>
       </InfoSection>
 
@@ -28,9 +28,9 @@ export default function PrivacyPage() {
 
       <InfoSection heading="Who we share it with">
         <p>
-          We share only what is necessary with delivery partners to complete your shipment, and
-          with service providers hosting our store (e.g. hosting and database providers). We do
-          not sell your personal data.
+          We share only what is necessary with delivery partners to complete your shipment, and with
+          service providers hosting our store (e.g. hosting and database providers). We do not sell
+          your personal data.
         </p>
       </InfoSection>
 

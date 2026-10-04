@@ -1,11 +1,14 @@
 import mongoose from 'mongoose';
 import Product from '../models/Product.js';
-import Order from '../models/Order.js';
+import Order, { ORDER_TRANSITIONS } from '../models/Order.js';
 import User from '../models/User.js';
 import { getConfig } from './configService.js';
 import { nextOrderNumber } from './counterService.js';
 import { registerCustomer } from './authService.js';
 import { ApiError } from '../utils/apiError.js';
+import env from '../config/env.js';
+import { sendMail } from './mailService.js';
+import { orderPlacedTemplate, orderStatusTemplate, adminOrderTemplate } from './mailTemplates.js';
 
 /** Normalizes PK phone variants (03..., +923..., 923...) to 03... */
 export function normalizePhone(input) {
@@ -26,6 +29,76 @@ function estimateDelivery(days) {
   const now = new Date();
   now.setDate(now.getDate() + days);
   return now;
+}
+
+function trackUrl(orderNumber) {
+  return `${env.webOrigin}/track-order?order=${encodeURIComponent(orderNumber)}`;
+}
+
+function itemCount(order) {
+  return (order.items || []).reduce((sum, i) => sum + (i.qty || 0), 0);
+}
+
+function formatDate(value) {
+  if (!value) return '';
+  return new Date(value).toLocaleDateString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  });
+}
+
+/**
+ * Fire-and-forget notifications (mailService never throws, so these can
+ * never fail an order). Customer gets the confirmation; NOTIFY_EMAIL gets
+ * a new-order alert if configured.
+ */
+function notifyOrderPlaced(order) {
+  const to = order.customer?.email;
+  if (to) {
+    void sendMail({
+      to,
+      ...orderPlacedTemplate({
+        name: order.customer.name,
+        orderNumber: order.orderNumber,
+        total: order.pricing.total,
+        itemsCount: itemCount(order),
+        estimated: formatDate(order.estimatedDelivery),
+        trackUrl: trackUrl(order.orderNumber),
+      }),
+      meta: { kind: 'order-placed', orderNumber: order.orderNumber },
+    });
+  }
+  if (env.mail.notify) {
+    void sendMail({
+      to: env.mail.notify,
+      ...adminOrderTemplate({
+        orderNumber: order.orderNumber,
+        total: order.pricing.total,
+        itemsCount: itemCount(order),
+        customer: order.customer.name,
+        city: order.shippingAddress?.city,
+        phone: order.shippingAddress?.phone,
+      }),
+      meta: { kind: 'order-new-admin', orderNumber: order.orderNumber },
+    });
+  }
+}
+
+function notifyOrderStatus(order, status, note) {
+  const to = order.customer?.email;
+  if (!to) return;
+  void sendMail({
+    to,
+    ...orderStatusTemplate({
+      name: order.customer.name,
+      orderNumber: order.orderNumber,
+      status,
+      note,
+      trackUrl: trackUrl(order.orderNumber),
+    }),
+    meta: { kind: 'order-status', orderNumber: order.orderNumber },
+  });
 }
 
 /**
@@ -197,6 +270,8 @@ export async function createOrder({ customer, shippingAddress, items, createAcco
       }
     }
 
+    notifyOrderPlaced(order);
+
     return { order, accountCreated };
   } catch (err) {
     // Roll back stock if order persistence failed after decrementing
@@ -210,6 +285,71 @@ export async function createOrder({ customer, shippingAddress, items, createAcco
     }
     throw err;
   }
+}
+
+/**
+ * Server-enforced status transition (docs/04 §5.5.3, side-effects per docs/03 §4):
+ * cancel/return restores stock once (stockAdjusted guard) + rolls back soldCount,
+ * delivered marks COD payment paid.
+ */
+export async function transitionOrder(orderId, { status, note }, actor) {
+  const order = await Order.findById(orderId);
+  if (!order) throw ApiError.notFound('Order not found');
+
+  const allowed = ORDER_TRANSITIONS[order.status] || [];
+  if (!allowed.includes(status)) {
+    throw new ApiError(
+      400,
+      `Cannot move order from "${order.status}" to "${status}"`,
+      'INVALID_TRANSITION',
+      null,
+      { allowed }
+    );
+  }
+
+  const restoresStock = status === 'cancelled' || status === 'returned';
+  if (restoresStock && !order.stockAdjusted) {
+    for (const item of order.items) {
+      const filter = item.sku
+        ? { _id: item.product, variants: { $elemMatch: { sku: item.sku } } }
+        : { _id: item.product, variants: { $elemMatch: { size: item.size, color: item.color } } };
+      await Product.updateOne(filter, { $inc: { 'variants.$.stock': item.qty } }).catch(() => {});
+    }
+    const soldByProduct = new Map();
+    for (const item of order.items) {
+      const key = String(item.product);
+      soldByProduct.set(key, (soldByProduct.get(key) || 0) + item.qty);
+    }
+    await Product.bulkWrite(
+      [...soldByProduct.entries()].map(([pid, qty]) => ({
+        updateOne: { filter: { _id: pid }, update: { $inc: { soldCount: -qty } } },
+      }))
+    );
+    order.stockAdjusted = true;
+    if (status === 'cancelled') {
+      order.cancelledAt = new Date();
+      if (note) order.cancelReason = note;
+    }
+  }
+
+  if (status === 'delivered') {
+    order.payment.status = 'paid';
+    order.payment.paidAt = new Date();
+  }
+
+  order.status = status;
+  order.statusHistory.push({ status, note: note || '', by: actor?._id });
+  await order.save();
+  notifyOrderStatus(order, status, note);
+  return order;
+}
+
+export async function setInternalNote(orderId, internalNote) {
+  const order = await Order.findById(orderId);
+  if (!order) throw ApiError.notFound('Order not found');
+  order.internalNote = internalNote;
+  await order.save();
+  return order;
 }
 
 export async function lookupOrder(orderNumber, phone) {

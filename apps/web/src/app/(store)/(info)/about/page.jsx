@@ -9,9 +9,18 @@ export const metadata = {
 };
 
 const VALUES = [
-  { title: 'Honest craftsmanship', text: 'Every pair is finished with careful quality checks before it ships.' },
-  { title: 'Fair, honest pricing', text: 'Quality footwear at prices that make sense for Pakistani families.' },
-  { title: 'Nationwide COD', text: 'Cash on delivery across Pakistan — pay only when the pair is in your hands.' },
+  {
+    title: 'Honest craftsmanship',
+    text: 'Every pair is finished with careful quality checks before it ships.',
+  },
+  {
+    title: 'Fair, honest pricing',
+    text: 'Quality footwear at prices that make sense for Pakistani families.',
+  },
+  {
+    title: 'Nationwide COD',
+    text: 'Cash on delivery across Pakistan — pay only when the pair is in your hands.',
+  },
 ];
 
 export default function AboutPage() {
@@ -38,8 +47,8 @@ export default function AboutPage() {
           people actually wear — to work, to the mosque, to family events — and wear for years.
         </p>
         <p>
-          We work with experienced craftsmen, select durable materials, and keep our catalogue
-          tight so we can stand behind every product we sell.
+          We work with experienced craftsmen, select durable materials, and keep our catalogue tight
+          so we can stand behind every product we sell.
         </p>
       </InfoSection>
 

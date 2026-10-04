@@ -6,12 +6,17 @@ import compression from 'compression';
 import env from './config/env.js';
 import apiRoutes from './routes/index.js';
 import { notFoundHandler, errorHandler } from './middlewares/error.js';
+import { UPLOADS_DIR } from './utils/upload.js';
 
 export function createApp() {
   const app = express();
 
   app.set('trust proxy', 1);
-  app.use(helmet());
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    })
+  );
   app.use(
     cors({
       origin: [env.webOrigin],
@@ -23,8 +28,17 @@ export function createApp() {
   app.use(express.urlencoded({ extended: true }));
   app.use(morgan(env.isProd ? 'combined' : 'dev'));
 
+  app.use('/uploads', express.static(UPLOADS_DIR, { maxAge: '7d' }));
+
   app.get('/health', (_req, res) => {
     res.json({ ok: true, uptime: Math.round(process.uptime()) });
+  });
+
+  app.get('/version', (_req, res) => {
+    res.json({
+      commit: process.env.SOURCE_COMMIT || process.env.GIT_COMMIT || null,
+      env: env.nodeEnv,
+    });
   });
 
   app.use('/api/v1', apiRoutes);

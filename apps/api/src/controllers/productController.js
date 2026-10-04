@@ -46,7 +46,25 @@ async function buildFilter(query) {
 
   if (query.category) {
     const cat = await Category.findOne({ slug: query.category, isActive: true }).select('_id');
-    filter.category = cat ? cat._id : null;
+    if (cat) {
+      const all = await Category.find({ isActive: true }).select('_id parent').lean();
+      const childrenOf = new Map();
+      for (const c of all) {
+        const key = c.parent ? c.parent.toString() : 'root';
+        if (!childrenOf.has(key)) childrenOf.set(key, []);
+        childrenOf.get(key).push(c._id);
+      }
+      const ids = [];
+      const queue = [cat._id];
+      while (queue.length) {
+        const id = queue.shift();
+        ids.push(id);
+        for (const child of childrenOf.get(id.toString()) || []) queue.push(child);
+      }
+      filter.category = { $in: ids };
+    } else {
+      filter.category = null;
+    }
   }
 
   if (query.featured === 'true') filter.isFeatured = true;

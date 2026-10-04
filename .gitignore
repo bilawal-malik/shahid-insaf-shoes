@@ -46,5 +46,8 @@ Thumbs.db
 .vercel/
 .railway/
 
+# local upload storage (Cloudinary in production)
+apps/api/uploads/
+
 # misc
 *.tsbuildinfo

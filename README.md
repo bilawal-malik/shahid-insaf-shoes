@@ -31,9 +31,11 @@ All project documentation lives in [`docs/`](./docs/README.md):
 
 ## Commands
 
-| Command          |                             |
-| ---------------- | --------------------------- |
-| `npm run dev`    | Start web + API together    |
-| `npm run build`  | Production build            |
-| `npm run lint`   | ESLint (0 warnings allowed) |
-| `npm run format` | Prettier                    |
+| Command                     |                                             |
+| --------------------------- | ------------------------------------------- |
+| `npm run dev`               | Start web + API together                    |
+| `npm run build`             | Production build                            |
+| `npm run lint`              | ESLint (0 warnings allowed)                 |
+| `npm run format`            | Prettier                                    |
+| `npm run seed`              | Seed dev data (needs MongoDB)               |
+| `npm run smoke -w apps/api` | API smoke tests (live `:4100` API required) |

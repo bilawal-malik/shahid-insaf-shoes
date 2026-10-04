@@ -279,7 +279,9 @@ function OrdersSection() {
         <div className="card p-10 text-center">
           <Package className="mx-auto h-10 w-10 text-brand-600" />
           <h2 className="mt-3 text-lg font-bold text-ink">No orders yet</h2>
-          <p className="mt-1 text-sm text-ink-soft">When you place an order it will show up here.</p>
+          <p className="mt-1 text-sm text-ink-soft">
+            When you place an order it will show up here.
+          </p>
           <Link href="/products" className="btn-primary mt-5 inline-flex">
             Start shopping
           </Link>

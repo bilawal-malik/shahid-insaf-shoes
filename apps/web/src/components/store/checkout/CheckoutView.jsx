@@ -2,15 +2,9 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useEffect, useSyncExternalStore, useState } from 'react';
+import { useEffect, useRef, useSyncExternalStore, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  Truck,
-  ShieldCheck,
-  MapPin,
-  User as UserIcon,
-  AlertTriangle,
-} from 'lucide-react';
+import { Truck, ShieldCheck, MapPin, User as UserIcon, AlertTriangle } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 import { useCartStore } from '@/store/cart';
 import { formatPKR } from '@/lib/format';
@@ -19,7 +13,12 @@ import EmptyState from '@/components/ui/EmptyState';
 
 export default function CheckoutView({ config }) {
   const router = useRouter();
-  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
+  const placedRef = useRef(false);
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
   const items = useCartStore((s) => s.items);
   const clear = useCartStore((s) => s.clear);
 
@@ -54,8 +53,7 @@ export default function CheckoutView({ config }) {
           phone: f.phone || r.user.phone || '',
           email: f.email || r.user.email || '',
         }));
-        const def =
-          r.user.addresses?.find((a) => a.isDefault) || r.user.addresses?.[0] || null;
+        const def = r.user.addresses?.find((a) => a.isDefault) || r.user.addresses?.[0] || null;
         if (def) {
           setSavedChoice(def._id);
           setForm((f) => ({
@@ -78,7 +76,9 @@ export default function CheckoutView({ config }) {
 
   const empty = mounted && items.length === 0;
   useEffect(() => {
-    if (empty) router.replace('/cart');
+    // Bounce to the cart when opened empty — but not right after placing an
+    // order (clear() empties the cart while we navigate to confirmation).
+    if (empty && !placedRef.current) router.replace('/cart');
   }, [empty, router]);
 
   const subtotal = items.reduce((sum, i) => sum + i.price * i.qty, 0);
@@ -155,6 +155,7 @@ export default function CheckoutView({ config }) {
       } catch {
         /* sessionStorage best-effort */
       }
+      placedRef.current = true;
       clear();
       router.push(`/order-confirmation/${res.order.orderNumber}`);
     } catch (err) {
@@ -209,7 +210,10 @@ export default function CheckoutView({ config }) {
                   </li>
                 ))}
               </ul>
-              <Link href="/cart" className="mt-2 inline-block font-semibold text-amber-900 underline">
+              <Link
+                href="/cart"
+                className="mt-2 inline-block font-semibold text-amber-900 underline"
+              >
                 Review your cart →
               </Link>
             </div>
@@ -233,7 +237,12 @@ export default function CheckoutView({ config }) {
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <label className="block">
                 <span className="label">Full name</span>
-                <input className="input" value={form.name} onChange={set('name')} autoComplete="name" />
+                <input
+                  className="input"
+                  value={form.name}
+                  onChange={set('name')}
+                  autoComplete="name"
+                />
                 {fieldErrors.name && <Err>{fieldErrors.name}</Err>}
               </label>
               <label className="block">
@@ -276,7 +285,9 @@ export default function CheckoutView({ config }) {
                   <label
                     key={a._id}
                     className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3.5 transition-colors ${
-                      savedChoice === a._id ? 'border-brand-700 bg-brand-50' : 'border-line hover:border-brand-300'
+                      savedChoice === a._id
+                        ? 'border-brand-700 bg-brand-50'
+                        : 'border-line hover:border-brand-300'
                     }`}
                   >
                     <input
@@ -298,7 +309,9 @@ export default function CheckoutView({ config }) {
                 ))}
                 <label
                   className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3.5 transition-colors ${
-                    savedChoice === 'new' ? 'border-brand-700 bg-brand-50' : 'border-line hover:border-brand-300'
+                    savedChoice === 'new'
+                      ? 'border-brand-700 bg-brand-50'
+                      : 'border-line hover:border-brand-300'
                   }`}
                 >
                   <input
@@ -340,7 +353,12 @@ export default function CheckoutView({ config }) {
                 </label>
                 <label className="block">
                   <span className="label">City</span>
-                  <input className="input" value={form.city} onChange={set('city')} autoComplete="address-level2" />
+                  <input
+                    className="input"
+                    value={form.city}
+                    onChange={set('city')}
+                    autoComplete="address-level2"
+                  />
                   {fieldErrors.city && <Err>{fieldErrors.city}</Err>}
                 </label>
                 <label className="block">
@@ -432,7 +450,15 @@ export default function CheckoutView({ config }) {
               {items.map((i) => (
                 <li key={i.key} className="flex gap-3">
                   <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-surface">
-                    {i.image && <Image src={i.image} alt={i.name} fill sizes="48px" className="object-cover" />}
+                    {i.image && (
+                      <Image
+                        src={i.image}
+                        alt={i.name}
+                        fill
+                        sizes="48px"
+                        className="object-cover"
+                      />
+                    )}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="line-clamp-1 text-sm font-medium text-ink">{i.name}</span>
@@ -440,7 +466,9 @@ export default function CheckoutView({ config }) {
                       {i.size} · {i.color} · ×{i.qty}
                     </span>
                   </span>
-                  <span className="text-sm font-semibold text-ink">{formatPKR(i.price * i.qty)}</span>
+                  <span className="text-sm font-semibold text-ink">
+                    {formatPKR(i.price * i.qty)}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -452,7 +480,9 @@ export default function CheckoutView({ config }) {
               </div>
               <div className="flex justify-between">
                 <dt className="text-ink-soft">Shipping</dt>
-                <dd className={`font-medium ${ship.free ? 'text-emerald-600' : ''}`}>{ship.label}</dd>
+                <dd className={`font-medium ${ship.free ? 'text-emerald-600' : ''}`}>
+                  {ship.label}
+                </dd>
               </div>
               <div className="flex justify-between border-t border-line pt-3 text-base">
                 <dt className="font-semibold text-ink">Total</dt>

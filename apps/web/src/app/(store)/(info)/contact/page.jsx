@@ -14,16 +14,12 @@ export default async function ContactPage() {
   const whatsapp = (store.whatsapp || store.phone || '').replace(/[^\d]/g, '');
 
   return (
-    <InfoShell
-      title="Contact Us"
-      subtitle="We usually reply within one working day."
-      wide
-    >
+    <InfoShell title="Contact Us" subtitle="We usually reply within one working day." wide>
       <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
         <div className="space-y-6">
           <p>
-            Questions about sizing, an order or an exchange? Send us a message or reach out
-            directly — we are happy to help.
+            Questions about sizing, an order or an exchange? Send us a message or reach out directly
+            — we are happy to help.
           </p>
           <ContactForm />
         </div>

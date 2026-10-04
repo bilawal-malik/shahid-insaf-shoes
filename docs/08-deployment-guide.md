@@ -8,6 +8,7 @@
 | Express API                   | **Railway**                                    | `api.sispk.com`    |
 | Database                      | **MongoDB Atlas** (free M0 → paid when needed) | —                  |
 | Images                        | **Cloudinary**                                 | CDN URLs           |
+| Email (transactional)         | **Brevo** (free 300/day)                       | verified sender    |
 | DNS                           | Domain registrar (Namecheap/Porkbun/etc.)      | A/CNAME records    |
 
 > Domain example used throughout: **sispk.com** — replace with the real purchased domain.
@@ -18,18 +19,22 @@
 
 ### 1.1 `apps/api` (Railway)
 
-| Key                     | Example / notes                                                                                                                                    |
-| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `NODE_ENV`              | `production`                                                                                                                                       |
-| `PORT`                  | Railway injects `PORT` — app must `listen(process.env.PORT \|\| 4000)`                                                                             |
-| `MONGODB_URI`           | `mongodb+srv://user:pass@cluster.mongodb.net/sis_prod`                                                                                             |
-| `JWT_SECRET`            | long random string (`openssl rand -hex 32`) — **same secret as web? no: web never verifies JWT itself** (only API does). Web just forwards cookie. |
-| `JWT_EXPIRES_IN`        | `7d`                                                                                                                                               |
-| `WEB_ORIGIN`            | `https://sispk.com` (credentialed CORS allowlist)                                                                                                  |
-| `CLOUDINARY_CLOUD_NAME` | e.g. `sis-shoes`                                                                                                                                   |
-| `CLOUDINARY_API_KEY`    |                                                                                                                                                    |
-| `CLOUDINARY_API_SECRET` |                                                                                                                                                    |
-| `RATE_LIMIT_*`          | optional overrides                                                                                                                                 |
+| Key                        | Example / notes                                                                                                                                    |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `NODE_ENV`                 | `production`                                                                                                                                       |
+| `PORT`                     | Railway injects `PORT` — app must `listen(process.env.PORT \|\| 4000)`                                                                             |
+| `MONGODB_URI`              | `mongodb+srv://user:pass@cluster.mongodb.net/sis_prod`                                                                                             |
+| `JWT_SECRET`               | long random string (`openssl rand -hex 32`) — **same secret as web? no: web never verifies JWT itself** (only API does). Web just forwards cookie. |
+| `JWT_EXPIRES_IN`           | `7d`                                                                                                                                               |
+| `WEB_ORIGIN`               | `https://sispk.com` (credentialed CORS allowlist)                                                                                                  |
+| `CLOUDINARY_CLOUD_NAME`    | e.g. `sis-shoes`                                                                                                                                   |
+| `CLOUDINARY_API_KEY`       |                                                                                                                                                    |
+| `CLOUDINARY_API_SECRET`    |                                                                                                                                                    |
+| `BREVO_API_KEY`            | Brevo v3 API key (Transactional → SMTP & API). Transport used when `SMTP_HOST` is empty; sender email must be verified (account email is auto-ok)  |
+| `MAIL_FROM`                | `SIS Shoes <verified-sender@example.com>` — must match a Brevo-verified sender                                                                     |
+| `NOTIFY_EMAIL`             | store inbox for contact-form alerts + new-order notifications                                                                                      |
+| `SMTP_HOST/PORT/USER/PASS` | optional alternative transport (any SMTP relay) — takes precedence over Brevo                                                                      |
+| `RATE_LIMIT_*`             | optional overrides                                                                                                                                 |
 
 ### 1.2 `apps/web` (Vercel)
 
@@ -54,6 +59,9 @@ WEB_ORIGIN=http://localhost:3100
 CLOUDINARY_CLOUD_NAME=
 CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
+BREVO_API_KEY=
+MAIL_FROM="SIS Shoes <verified-sender@example.com>"
+NOTIFY_EMAIL=
 
 # apps/web (.env.local)
 API_URL=http://localhost:4100/api/v1
@@ -85,7 +93,7 @@ NEXT_PUBLIC_SITE_NAME=SIS — Shahid Insaf Shoes
 3. **Monorepo gotcha:** Railway must install only the API workspace. Preferred setup:
    - Add `apps/api/package.json` with its own start script
    - Railway Root Directory = `apps/api` → treat as standalone Node project (simplest)
-   - OR root Dockerfile building only api stage (most reliable — decide in P7)
+   - **Note:** Docker is intentionally not used — Vercel + Railway only (see `railway.json` at repo root for start command + healthcheck)
 4. Add env vars (§1.1)
 5. Generate domain → `api.sispk.com` (Railway Settings → Networking → Generate Domain, then CNAME to your DNS)
 6. Health check path: `/health` (Railway checks `/api/health` if prefixed — align with deploy; docs assume mounted at `/health` root AND `/api/v1/...` versioned routes)
@@ -146,6 +154,8 @@ NEXT_PUBLIC_SITE_NAME=SIS — Shahid Insaf Shoes
 - [ ] `track-order` works with order# + phone
 - [ ] Admin login → update status Placed→Confirmed→Shipped→Delivered; timeline records; stock updates
 - [ ] Cancel restores stock
+- [ ] Register → verification email arrives (check spam); login blocked until verified; resend works
+- [ ] Order placed → confirmation email arrives + NOTIFY_EMAIL admin alert arrives
 - [ ] Change shipping flatRate in config → checkout total changes (new session)
 - [ ] Image upload from admin works (Cloudinary prod)
 - [ ] Guest cart persists across reloads; logged-in cart syncs

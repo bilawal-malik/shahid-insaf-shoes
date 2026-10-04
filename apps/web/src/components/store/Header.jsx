@@ -1,10 +1,15 @@
 import Link from 'next/link';
+import Image from 'next/image';
+import { cookies } from 'next/headers';
 import { User, Package } from 'lucide-react';
 import MobileMenu from './MobileMenu';
 import SearchBar from './SearchBar';
 import CartBadge from './CartBadge';
+import SignOutButton from './SignOutButton';
 
-export default function Header({ config, categories = [] }) {
+export default async function Header({ config, categories = [] }) {
+  const cookieStore = await cookies();
+  const isLoggedIn = cookieStore.has('sis_jwt');
   const announcement = config?.announcement;
   const freeAbove = config?.shipping?.freeAbove || 0;
   const announcementText =
@@ -26,11 +31,17 @@ export default function Header({ config, categories = [] }) {
 
       <div className="border-b border-line bg-white/95 backdrop-blur">
         <div className="container-app relative flex h-16 items-center gap-2 sm:gap-4">
-          <MobileMenu categories={categories} />
+          <MobileMenu categories={categories} isLoggedIn={isLoggedIn} />
 
           <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="SIS home">
-            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-800 text-sm font-black tracking-tight text-white">
-              SIS
+            <span className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg border border-line bg-white">
+              <Image
+                src="/logo.jpeg"
+                alt="Shahid Insaf Shoes"
+                width={40}
+                height={40}
+                className="h-full w-full object-contain"
+              />
             </span>
             <span className="hidden flex-col leading-none sm:flex">
               <span className="text-sm font-extrabold tracking-tight text-ink">
@@ -43,6 +54,7 @@ export default function Header({ config, categories = [] }) {
           </Link>
 
           <nav aria-label="Main" className="ml-6 hidden items-center gap-6 lg:flex">
+            <NavLink href="/">Home</NavLink>
             <NavLink href="/products">All</NavLink>
             {categories.slice(0, 5).map((cat) => (
               <NavLink key={cat._id} href={`/categories/${cat.slug}`}>
@@ -53,13 +65,26 @@ export default function Header({ config, categories = [] }) {
 
           <div className="ml-auto flex items-center gap-1 sm:gap-2">
             <SearchBar />
-            <Link
-              href="/login"
-              className="hidden items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium text-ink-soft transition-colors hover:bg-brand-50 hover:text-brand-700 xl:flex"
-            >
-              <User className="h-[18px] w-[18px]" />
-              Account
-            </Link>
+            {isLoggedIn ? (
+              <>
+                <Link
+                  href="/account"
+                  className="hidden items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium text-ink-soft transition-colors hover:bg-brand-50 hover:text-brand-700 xl:flex"
+                >
+                  <User className="h-[18px] w-[18px]" />
+                  Account
+                </Link>
+                <SignOutButton className="hidden rounded-lg px-2.5 py-2 text-sm font-medium text-ink-soft xl:block" />
+              </>
+            ) : (
+              <Link
+                href="/login"
+                className="hidden items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium text-ink-soft transition-colors hover:bg-brand-50 hover:text-brand-700 xl:flex"
+              >
+                <User className="h-[18px] w-[18px]" />
+                Sign In
+              </Link>
+            )}
             <Link
               href="/track-order"
               aria-label="Track order"
